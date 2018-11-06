@@ -1,18 +1,11 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h> /* for strncpy */
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <net/if.h>
-#include <arpa/inet.h>
+#include "get_my_ip.h"
 
 #define IPV4_ADDR_LEN 16 //XXX.XXX.XXX.XXX + \0
 
-int main()
+char alt_local_ip[IPV4_ADDR_LEN + 2] = {0};	 //+2 because  + ""
+char broadcast_ip[IPV4_ADDR_LEN] = {0};
+
+const char * getmyip()
 {
 
 	/*GET DEFAULT interface*/
@@ -20,18 +13,40 @@ int main()
 	FILE *f;
 	char line[100] , *p , *c;
 
-	f = fopen("/proc/net/route" , "r");
+	f = fopen("/proc/net/route1111" , "r"); // TEST
 	if (f == NULL)
 	{
-		printf("fail to open '/proc/net/route' : %s \n", strerror(errno));
-		printf("enter your IP in format XXX.XXX.XXX.XXX \n");
+		printf("Fail to open '/proc/net/route' : %s \n", strerror(errno));
+		printf("Enter your IP in format XXX.XXX.XXX.XXX \n");
 		char stdin_ip[IPV4_ADDR_LEN]={0};
 		scanf("%s", stdin_ip);
-		char alt_local_ip[IPV4_ADDR_LEN + 2] = {0};	 //+2 because  + ""
+		
 		sprintf(alt_local_ip,"\"%s\"",stdin_ip);
+		
+		
+		int ip_sep = 4;
+		char ip_chk[IPV4_ADDR_LEN + 2];
+		memcpy (ip_chk, alt_local_ip, strlen(alt_local_ip));
+		if ((strtok(ip_chk, ".")) == NULL)
+		{
+			printf("IP format is wrong ! \n");
+			return NULL;
+		}
+		else
+		{
+			ip_sep--;
+			while ((strtok(NULL,".")) != NULL)
+			ip_sep--;
+			if (ip_sep !=0)
+			{
+				printf("IP format is wrong !\n");
+				return NULL;
+			}
+		}
+		
 		printf("%s\n", alt_local_ip);
-
-		return 0;
+		printf("OK! \n");
+		return alt_local_ip; 
 	}
 
 
@@ -59,7 +74,7 @@ int main()
 	if(fd < 0)
     {
         printf("Creating socket error : %s \n", strerror(errno));
-        exit(1);
+        return NULL;
     }
 	/*get an IPv4 IP address */
 	ifr.ifr_addr.sa_family = AF_INET;
@@ -75,7 +90,7 @@ int main()
 
 	const char * local_ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 
-	char broadcast_ip[IPV4_ADDR_LEN] = {0};
+	
 	strncpy (broadcast_ip, local_ip, (sizeof(broadcast_ip)*(sizeof(char))));		
 
  	char * lastByte = strrchr(broadcast_ip, '.');
@@ -84,5 +99,5 @@ int main()
 	printf("local IP : %s\n", local_ip);
 	printf("broadcast IP : %s\n", broadcast_ip);
 
-	return 0;
+	return broadcast_ip;
 }

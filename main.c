@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <signal.h> //kill();
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -7,7 +8,7 @@
 #include <unistd.h> //close
 #include <string.h>
 #include <errno.h>
-
+#include "get_my_ip.h"
 
 #define ADDR "192.168.0.255" // for inet_addr()
 //#define ADDR(A,B,C,D) ((A<<24) | (B << 16) | (C << 8) | (D)) //for htonl()
@@ -15,6 +16,7 @@
 #define PORT 5050
 
 char msg[1024]={0};
+int split = 0;
 
 void sender()
 {
@@ -30,13 +32,22 @@ void sender()
     }
 
     addr1.sin_family = AF_INET;
-    addr1.sin_port = htons(PORT); // или любой другой порт...
-    addr1.sin_addr.s_addr = inet_addr(ADDR);
+    addr1.sin_port = htons(PORT);
+	
+	const char * badr = getmyip();
+	if (badr == NULL) {printf("Failed to set IP1 ! \n"); kill(split, 2); exit(1);}
+	
+	int ipchk = inet_pton(AF_INET,badr, &addr1.sin_addr.s_addr); //test
+	//int ipchk = inet_aton(badr, (struct in_addr*)&addr1.sin_addr.s_addr); // <------------ test
+	printf("ipchk: %d \n", ipchk);
+	if (ipchk == 0) {printf("Failed to set IP2 ! \n"); kill(split, 2); exit(1);}
+	
+	//addr1.sin_addr.s_addr = inet_addr(badr); <------------ test
 
 	//bradcast premission
 	unsigned int broadcastPermission = 1;
 	if (setsockopt(sock1, SOL_SOCKET, SO_BROADCAST, (void *) &broadcastPermission, sizeof(broadcastPermission)) < 0)
-    printf("setsockopt() failed");
+    printf("Set Socket option error : %s \n", strerror(errno));
 
 
 /*	
@@ -67,7 +78,7 @@ void sender()
 
 int main()
 {
-	int split = fork();
+	split = fork();
 
 	if (split == -1) // if fork fail
 	    {
@@ -76,17 +87,9 @@ int main()
 		   	exit(1);
 	    }
 
-	//child - sender
+	//child - listen server
 	else if (split == 0)
 	{
-		//return 0; //test
-
-		sender();
-	}
-	//parent - listen server
-	else 
-	{
-
 		int sock;
 		struct sockaddr_in addr;
 		char buf[1024];
@@ -171,6 +174,13 @@ int main()
 		return 0;
 		close(sock);
 		
+	}
+	
+	//parent - sender
+	
+	else 
+	{
+		sender();
 	}
 
 }
