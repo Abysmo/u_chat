@@ -10,13 +10,19 @@
 #include <errno.h>
 #include "get_my_ip.h"
 
-#define ADDR "192.168.0.255" // for inet_addr()
+//#define ADDR "192.168.0.255" // for inet_addr()
 //#define ADDR(A,B,C,D) ((A<<24) | (B << 16) | (C << 8) | (D)) //for htonl()
-#define ADDR2 4294967295 //192.168.0.255(3232235775) | INADDR_LOOPBACK | 4294967295(255.255.255.255)
+//#define ADDR2 4294967295 //192.168.0.255(3232235775) | INADDR_LOOPBACK | 4294967295(255.255.255.255)
 #define PORT 5050
 
 char msg[1024]={0};
-int split = 0;
+int split = 0; //fork(); result for kill();
+
+struct net_user 
+{
+char ip[12];
+char name[12];
+};
 
 void sender()
 {
@@ -35,14 +41,15 @@ void sender()
     addr1.sin_port = htons(PORT);
 	
 	const char * badr = getmyip();
-	if (badr == NULL) {printf("Failed to set IP1 ! \n"); kill(split, 2); exit(1);}
+	if (badr == NULL) {printf("Failed to set IP ! \n"); kill(split, 2); exit(1);}
 	
-	int ipchk = inet_pton(AF_INET,badr, &addr1.sin_addr.s_addr); //test
-	//int ipchk = inet_aton(badr, (struct in_addr*)&addr1.sin_addr.s_addr); // <------------ test
-	printf("ipchk: %d \n", ipchk);
-	if (ipchk == 0) {printf("Failed to set IP2 ! \n"); kill(split, 2); exit(1);}
-	
-	//addr1.sin_addr.s_addr = inet_addr(badr); <------------ test
+	//int ipchk = inet_pton(AF_INET,badr, &addr1.sin_addr.s_addr); // <------------ valid ip test
+	//int ipchk = inet_aton(badr, (struct in_addr*)&addr1.sin_addr.s_addr); 
+	//printf("ipchk: %d \n", ipchk);
+	//if (ipchk == 0) {printf("Failed to set IP2 ! \n"); kill(split, 2); exit(1);} 
+	addr1.sin_addr.s_addr = inet_addr(badr); 
+
+
 
 	//bradcast premission
 	unsigned int broadcastPermission = 1;
@@ -50,7 +57,7 @@ void sender()
     printf("Set Socket option error : %s \n", strerror(errno));
 
 
-/*	
+/*	//TCP
 	if(bind(sock1, (struct sockaddr *)&addr1, sizeof(addr1)) < 0)
 	{
 	    printf("Bind address error : %s \n", strerror(errno));

@@ -1,6 +1,7 @@
 #include "get_my_ip.h"
 
 #define IPV4_ADDR_LEN 16 //XXX.XXX.XXX.XXX + \0
+#define ROUTE_PATH "/proc/net/route"
 
 char alt_local_ip[IPV4_ADDR_LEN + 2] = {0};	 //+2 because  + ""
 char broadcast_ip[IPV4_ADDR_LEN] = {0};
@@ -13,10 +14,11 @@ const char * getmyip()
 	FILE *f;
 	char line[100] , *p , *c;
 
-	f = fopen("/proc/net/route1111" , "r"); // TEST
+	f = fopen(ROUTE_PATH , "r"); // TEST
 	if (f == NULL)
 	{
-		printf("Fail to open '/proc/net/route' : %s \n", strerror(errno));
+		printf(ROUTE_PATH);
+		printf(" - Fail to open : %s \n", strerror(errno));
 		printf("Enter your IP in format XXX.XXX.XXX.XXX \n");
 		char stdin_ip[IPV4_ADDR_LEN]={0};
 		scanf("%s", stdin_ip);
