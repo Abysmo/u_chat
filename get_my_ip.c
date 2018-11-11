@@ -6,7 +6,9 @@
 char alt_local_ip[IPV4_ADDR_LEN + 2] = {0};	 //+2 because  + ""
 char broadcast_ip[IPV4_ADDR_LEN] = {0};
 
-const char * getmyip()
+/*retflag ---> if (retflag == true) - getmyip() return actual ip, else return broadcast ip (xxx.xxx.xxx.255)
+infoflag ---> if (infoflag == true) - getmyip() print info about local ip, broadcast ip and default interface else no info is printed*/
+const char * getmyip(int retflag, int infoflag)
 {
 
 	/*GET DEFAULT interface*/
@@ -61,7 +63,7 @@ const char * getmyip()
 		{
 			if(strcmp(c , "00000000") == 0)
 			{
-				printf("Default interface is : %s \n" , p);
+				//printf("Default interface is : %s \n" , p);
 				break;
 			}
 		}
@@ -98,8 +100,14 @@ const char * getmyip()
  	char * lastByte = strrchr(broadcast_ip, '.');
 	memcpy(++lastByte, "255", (3*sizeof(char)));
 	
-	printf("local IP : %s\n", local_ip);
-	printf("broadcast IP : %s\n", broadcast_ip);
-
-	return broadcast_ip;
+	if(infoflag)
+	{
+		printf("Default interface is : %s \n" , p);
+		printf("local IP : %s\n", local_ip);
+		printf("broadcast IP : %s\n", broadcast_ip);
+	}
+	
+	if (retflag) return local_ip;
+	else return broadcast_ip;
 }
+

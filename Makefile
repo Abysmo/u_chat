@@ -1,13 +1,20 @@
+CC=gcc
+CFLAGS=-Wall -c #-lncurses
+LFLAGS=-lncurses
+
 all: chat clean
 
-chat: main.o get_my_ip.o
-	gcc main.o get_my_ip.o -o chat
+chat: main.o get_my_ip.o terminal_ui.o
+	$(CC) main.o get_my_ip.o $(LFLAGS) -o chat
 
-main: main.c
-	gcc -c main.c
+main.o: main.c
+	$(CC) $(CFLAGS) main.c
 
-get_my_ip: get_my_ip.c
-	gcc -c get_my_ip.c
+get_my_ip.o: get_my_ip.c
+	$(CC) $(CFLAGS) get_my_ip.c
+
+terminal_ui.o: terminal_ui.c
+	$(CC) $(CFLAGS) terminal_ui.c
 
 clean:
 	rm -rf *.o
