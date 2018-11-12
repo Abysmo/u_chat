@@ -9,6 +9,7 @@
 #include <string.h>
 #include <errno.h>
 #include "get_my_ip.h"
+#include <ncurses.h>
 //#include "terminal_ctl.h"
 #include "terminal_ui.h"
 
@@ -37,8 +38,9 @@ void sender()
 	char msg[MSG_MAXLEN]={0};
     struct sockaddr_in addr1;
 
-	//ncurses
-	win1_outcome_msg_init();
+		/*ncurses*/
+	extern WINDOW * win3;
+	win3_outcome_msg_init();
 
 	sock1 = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); //UDP
     if(sock1 < 0)
@@ -62,8 +64,8 @@ void sender()
 	while (1)
 	{	
 
-		wprintw(win,"TEST_WIN");
-		wrefresh(win);		
+		wprintw(win3,"TEST_WINdsz");
+		wrefresh(win3);		
 	
 		fputs(STD_IN_INVITE, stdout); //invitation string
 		if (fgets(msg,MSG_MAXLEN,stdin)!=NULL)
@@ -98,8 +100,11 @@ int main()
 		char buf[MSG_MAXLEN];
 		int bytes_read;	
 
-		//ncurses 
-		win3_income_msg_init();
+			/*ncurses*/
+		extern WINDOW * win1;
+		win1_income_msg_init();
+		
+
 
 		const char * tmp_my_ip = getmyip(1,0);
 		char my_ip[IP_LEN]={0};
@@ -136,8 +141,8 @@ int main()
 				if (strstr(inet_ntoa(income_addr.sin_addr), my_ip) != NULL){continue;}
 				
 
-				wprintw(win,"%s %s",inet_ntoa(income_addr.sin_addr),buf);
-				wrefresh(win);		
+				wprintw(win1,"%s %s",inet_ntoa(income_addr.sin_addr),buf);
+				wrefresh(win1);		
 				/*
 				fputs(inet_ntoa(income_addr.sin_addr), stdout); //received ip
 				fputs(STD_OUT_INVITE, stdout);
