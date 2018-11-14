@@ -1,74 +1,106 @@
 #include <ncurses.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+
 //#include <>
 
-WINDOW * win3;
-WINDOW * win2;
-WINDOW * win1;
 
-void win1_income_msg_init()
-{
-	//ncurses 
-	if(!initscr())
-	{printf("Ncurses win3 init fail");exit(1);}
+
+chtype i_char;
+int w_rows, w_cols, cur_posX, cur_posY;
 	
-	
-	int w_rows, w_cols;
-	start_color();
-	init_pair(1,  COLOR_BLUE, COLOR_WHITE);
-	getmaxyx(stdscr,w_rows, w_cols);
-	win1 = newwin(w_rows-3, w_cols, 0, 1);
-	box(win1, 0, 0);
-	wcolor_set(win1, 1, NULL);
+WINDOW * create_msgbox_win()
+{	
+	getmaxyx(stdscr, w_rows, w_cols);
 
-	clear();
-	wprintw(win1,"w_cols:%d|w_rows%d",w_cols,w_rows); //test
-	wrefresh(win1);
-	
-}
-
-
-void win2_users_init()
-{
-	//ncurses 
-	if(!initscr())
-	{printf("Ncurses win2 init fail");exit(1);}
-
-	int w_row, w_col;
-	start_color();
-	init_pair(1,  COLOR_BLUE, COLOR_WHITE);
-	getmaxyx(stdscr, w_row, w_col);
-	win2 = newwin(w_row-2, w_col, 0, 0);
-	box(win2, 0, 0);
-	wcolor_set(win2, 1, NULL);
-		//clear();
-}
-
-void win3_outcome_msg_init()
-{
-	//ncurses 
-	if(!initscr())
-	{printf("Ncurses win1 init fail");exit(1);}
-
-	int w_rows, w_cols;
+	WINDOW * win = newwin(w_rows-1, w_cols, 0, 0);
+	wborder(win,ACS_VLINE,ACS_VLINE,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD);
 	start_color();
 	init_pair(1, COLOR_GREEN, COLOR_BLACK);
-	getmaxyx(stdscr,w_rows, w_cols);
-	win3 = subwin(win1, w_rows, 1, 0, w_rows-1);
-	box(win3, 0, 0);
-	wcolor_set(win3, 1, NULL);
-	
-	clear();
-	
-	wmove(win3, 0,0);
-	wprintw(win3,"TEST!!123sad!!"); //test
-	wrefresh(win3);
-	wrefresh(win1);
+	wcolor_set(win, 1, NULL);
+	wbkgd(win,COLOR_PAIR(1));	
+	//wprintw(win,"TEST_BOX\n"); //win test
+	wrefresh(win);		
+	return win;
+}
+
+WINDOW * create_msgsend_win()
+{	
+	getmaxyx(stdscr, w_rows, w_cols);
+
+	WINDOW * win = newwin(1, w_cols, w_rows-1, 0);
+	start_color();
+	init_pair(2, COLOR_WHITE, COLOR_BLUE);
+	wcolor_set(win, 2, NULL);
+	wbkgd(win,COLOR_PAIR(2));
+	//wprintw(win,"TEST_SEND\n"); //test
+	wrefresh(win);
+	return win;
+}
 
 
+void ncurses_setup()
+{
+	if(!initscr())
+	{fprintf(stderr,"Ncurses win init fail");exit(1);}
+	refresh();
+
+	//cbreak();
+	//nodelay(stdscr, TRUE);
+	//delwin(stdscr);
+	//curs_set(0);
+	noecho();
+	keypad(stdscr, TRUE);
 
 }
 
 
+void send_msg_handler(WINDOW * sendwin)
+{
+	wmove(sendwin,0,0);
+	wrefresh(sendwin);	
 
+	do
+	{	
+		if((i_char = getch())==ERR) continue;
+		else if (i_char == KEY_BACKSPACE) 
+		{
+			getyx(sendwin, cur_posY, cur_posX);
+			wmove(sendwin,	cur_posY, cur_posX-1);		
+			wdelch(sendwin);
+			wrefresh(sendwin);
+			continue;
+		}
+		else if (i_char == KEY_DC) 
+		{	
+			wdelch(sendwin);
+			wrefresh(sendwin);
+			continue;
+		}
+		else if (i_char == KEY_LEFT) 
+		{
+			getyx(sendwin, cur_posY, cur_posX);
+			wmove(sendwin,	cur_posY, cur_posX-1);
+			wrefresh(sendwin);
+		}
+		else if (i_char == KEY_RIGHT) 
+		{
+			getyx(sendwin, cur_posY, cur_posX);
+			wmove(sendwin,	cur_posY, cur_posX+1);
+			wrefresh(sendwin);
+		}
+		else
+		wechochar(sendwin, i_char);
+	}
+	while (i_char != KEY_UP);
+	
+
+	//getch();	
+    endwin();
+	exit(0);
+
+}
 

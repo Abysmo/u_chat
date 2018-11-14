@@ -1,10 +1,11 @@
 #ifndef _TERMINAL_UI_H
 #define _TERMINAL_UI_H
 
+#include <ncurses.h>
 
-void win1_income_msg_init();
-void win2_users_init();
-void win3_outcome_msg_init();
-
+WINDOW * create_msgbox_win();
+WINDOW * create_msgsend_win();
+void ncurses_setup();
+void send_msg_handler(WINDOW * sendwin);
 
 #endif

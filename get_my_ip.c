@@ -20,7 +20,7 @@ const char * getmyip(int retflag, int infoflag)
 	if (f == NULL)
 	{
 		printf(ROUTE_PATH);
-		printf(" - Fail to open : %s \n", strerror(errno));
+		fprintf(stderr," - Fail to open : %s \n", strerror(errno));
 		printf("Enter your IP in format XXX.XXX.XXX.XXX \n");
 		char stdin_ip[IPV4_ADDR_LEN]={0};
 		scanf("%s", stdin_ip);
@@ -33,7 +33,7 @@ const char * getmyip(int retflag, int infoflag)
 		memcpy (ip_chk, alt_local_ip, strlen(alt_local_ip));
 		if ((strtok(ip_chk, ".")) == NULL)
 		{
-			printf("IP format is wrong ! \n");
+			fprintf(stderr,"IP format is wrong ! \n");
 			return NULL;
 		}
 		else
@@ -43,7 +43,7 @@ const char * getmyip(int retflag, int infoflag)
 			ip_sep--;
 			if (ip_sep !=0)
 			{
-				printf("IP format is wrong !\n");
+				fprintf(stderr,"IP format is wrong !\n");
 				return NULL;
 			}
 		}
@@ -77,7 +77,7 @@ const char * getmyip(int retflag, int infoflag)
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if(fd < 0)
     {
-        printf("Creating socket error : %s \n", strerror(errno));
+        fprintf(stderr,"Creating socket error : %s \n", strerror(errno));
         return NULL;
     }
 	/*get an IPv4 IP address */
