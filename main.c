@@ -7,17 +7,17 @@
 #include <unistd.h> //close
 #include <string.h>
 #include <errno.h>
+ #include <signal.h> // sig handle
 #include "get_my_ip.h"
 //#include "terminal_ctl.h"
 #include "terminal_ui.h"
 
 //#define ADDR "192.168.0.255" // for inet_addr()
-//#define ADDR(A,B,C,D) ((A<<24) | (B << 16) | (C << 8) | (D)) //for htonl()
+//#define ADDR(A,B,C,D) ((A<<24) | (B << 16) | (C << 8) | (D)) // for htonl()
+
 
 #define PORT 5050
 #define MSG_MAXLEN 1024
-#define STD_OUT_INVITE ">> "
-#define STD_IN_INVITE "<< "
 #define IP_LEN 16
 #define NAME_LEN 12
 
@@ -36,19 +36,11 @@ int main()
 
 	unsigned int income_addr_len;
 	struct sockaddr_in addr, income_addr;
-	char buf[MSG_MAXLEN];
-	char msg[MSG_MAXLEN]={0};	
-	int bytes_read;	
-	
-	//ncurses
-	ncurses_setup();
-	WINDOW * win1;	
-	WINDOW * win2;
-	win1 = create_msgbox_win();
-	win2 = create_msgsend_win();
+	char * buf[MSG_MAXLEN]={0};
+	char * msg;//[MSG_MAXLEN]={0};	
+	int bytes_read;
 
-
-	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); //UDP
+	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); //UDP (SOCK_NONBLOCK)
     if(sock < 0)
     {
         fprintf(stderr,"Socket error : %s \n", strerror(errno));
@@ -73,36 +65,58 @@ int main()
 	    exit(1);
 	}
 
+	//ncurses
+	extern chtype i_char;
+	extern int w_rows, w_cols, cur_posX, cur_posY;
+	ncurses_setup();
+	WINDOW * win1;	
+	WINDOW * win2;
+	win1 = create_msgbox_win();
+	win2 = create_msgsend_win();
 
 	while (1)
 	{	
 
-		send_msg_handler(win2);
+		msg = send_msg_handler(win2);
+		
 
 
-		if (fgets(msg,MSG_MAXLEN,stdin)!=NULL)
-			{
-	   			sendto(sock, msg, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
-				memset(msg, '\0', MSG_MAXLEN);
-			}
+		if (i_char == KEY_DOWN){endwin();exit(0);} //exit
+		if (i_char == '\n')
+		//if (fgets(msg,MSG_MAXLEN,stdin)!=NULL)
+		{
+			wprintw(win1,"[Enter pressed]");
+			wrefresh(win1);
 
+	   		//wgetnstr(win2, msg, strlen(msg));
+			sendto(sock, msg, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
+			
+			
+			wclear(win2);
+			wrefresh(win2);
+			memset(msg, '\0', MSG_MAXLEN);
+			
+			wprintw(win1,"[send exit]");
+			wrefresh(win1);
+		}
 
 
     	bytes_read = recvfrom(sock, buf, MSG_MAXLEN, MSG_DONTWAIT, (struct sockaddr *)&income_addr, &income_addr_len);		
-		if(bytes_read == 0 || bytes_read == EAGAIN) {continue;}
+		if((bytes_read <= 0) || (bytes_read == EAGAIN)) {continue;}
 		else 
 		{
 			//if (strstr(inet_ntoa(income_addr.sin_addr), my_ip) != NULL){continue;} //if its my msg -> skip
 			
-			wprintw(win1,"%s %s",inet_ntoa(income_addr.sin_addr),buf);
-			wrefresh(win1);		
+			waddnstr(win1, inet_ntoa(income_addr.sin_addr), income_addr_len);
+			waddnstr(win1, buf, bytes_read);
+			waddch(win1, '\n');
+			//wprintw(win1,"[%s] %s",inet_ntoa(income_addr.sin_addr),buf);
+			wrefresh(win1);
+			
+			getyx(win2, cur_posY, cur_posX);
+			wmove(win2,	cur_posY, cur_posX);
+			wrefresh(win2);	
 			continue;
-		/*
-		fputs(inet_ntoa(income_addr.sin_addr), stdout); //received ip
-		fputs(STD_OUT_INVITE, stdout);
-		fputs(buf, stdout);
-		memset(buf, '\0', strlen(buf));
-		*/
 		}
 
 	}
