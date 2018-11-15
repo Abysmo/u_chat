@@ -6,6 +6,6 @@
 WINDOW * create_msgbox_win();
 WINDOW * create_msgsend_win();
 void ncurses_setup();
-char * send_msg_handler(WINDOW * sendwin);
+void send_msg_handler(WINDOW * sendwin);
 
 #endif

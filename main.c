@@ -36,8 +36,8 @@ int main()
 
 	unsigned int income_addr_len;
 	struct sockaddr_in addr, income_addr;
-	char * buf[MSG_MAXLEN]={0};
-	char * msg;//[MSG_MAXLEN]={0};	
+	char buf[MSG_MAXLEN]={0};
+	char msg[MSG_MAXLEN]={0};	
 	int bytes_read;
 
 	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); //UDP (SOCK_NONBLOCK)
@@ -67,37 +67,38 @@ int main()
 
 	//ncurses
 	extern chtype i_char;
-	extern int w_rows, w_cols, cur_posX, cur_posY;
+	extern int cur_posX, cur_posY;
 	ncurses_setup();
 	WINDOW * win1;	
 	WINDOW * win2;
 	win1 = create_msgbox_win();
 	win2 = create_msgsend_win();
-
+	
 	while (1)
 	{	
 
-		msg = send_msg_handler(win2);
+		send_msg_handler(win2);
 		
-
-
 		if (i_char == KEY_DOWN){endwin();exit(0);} //exit
 		if (i_char == '\n')
 		//if (fgets(msg,MSG_MAXLEN,stdin)!=NULL)
 		{
-			wprintw(win1,"[Enter pressed]");
-			wrefresh(win1);
+			//getyx(win2, cur_posY, cur_posX);
+			//wmove(win2,	cur_posY, cur_posX);			
 
-	   		//wgetnstr(win2, msg, strlen(msg));
-			sendto(sock, msg, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
+			wgetstr(win2, msg);
 			
+			wprintw(win1,"[strlen -%d | msg -%s]", strlen(msg),msg);
+			wrefresh(win1);
+	   		//wgetnstr(win2, msg, strlen(msg));
+
+			sendto(sock, msg, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
 			
 			wclear(win2);
 			wrefresh(win2);
 			memset(msg, '\0', MSG_MAXLEN);
+			//wmove(win2,	0, 0);
 			
-			wprintw(win1,"[send exit]");
-			wrefresh(win1);
 		}
 
 
