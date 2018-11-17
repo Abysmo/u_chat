@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS=-Wall -c #-lncurses
-LFLAGS=-lncurses
+CFLAGS=-Wall -c
+LFLAGS=-lncursesw # ncurses(w) - for unicode
 
 all: chat clean
 

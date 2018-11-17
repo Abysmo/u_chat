@@ -7,10 +7,10 @@
 #include <unistd.h> //close
 #include <string.h>
 #include <errno.h>
- #include <signal.h> // sig handle
+//#include <signal.h> // sig handle
 #include "get_my_ip.h"
-//#include "terminal_ctl.h"
 #include "terminal_ui.h"
+#include <locale.h>
 
 //#define ADDR "192.168.0.255" // for inet_addr()
 //#define ADDR(A,B,C,D) ((A<<24) | (B << 16) | (C << 8) | (D)) // for htonl()
@@ -28,16 +28,14 @@ struct net_user
 	char name[NAME_LEN];
 };
 
-
-
+char * msg_ptr=NULL;
 
 int main()
 {
-
+	setlocale(0, ""); //for unicode
 	unsigned int income_addr_len;
 	struct sockaddr_in addr, income_addr;
 	char buf[MSG_MAXLEN]={0};
-	char msg[MSG_MAXLEN]={0};	
 	int bytes_read;
 
 	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); //UDP (SOCK_NONBLOCK)
@@ -65,6 +63,7 @@ int main()
 	    exit(1);
 	}
 
+
 	//ncurses
 	extern chtype i_char;
 	extern int cur_posX, cur_posY;
@@ -74,31 +73,18 @@ int main()
 	win1 = create_msgbox_win();
 	win2 = create_msgsend_win();
 	
+	
 	while (1)
 	{	
 
-		send_msg_handler(win2);
+		msg_ptr = send_msg_handler(win2);
 		
 		if (i_char == KEY_DOWN){endwin();exit(0);} //exit
 		if (i_char == '\n')
-		//if (fgets(msg,MSG_MAXLEN,stdin)!=NULL)
 		{
-			//getyx(win2, cur_posY, cur_posX);
-			//wmove(win2,	cur_posY, cur_posX);			
 
-			wgetstr(win2, msg);
-			
-			wprintw(win1,"[strlen -%d | msg -%s]", strlen(msg),msg);
-			wrefresh(win1);
-	   		//wgetnstr(win2, msg, strlen(msg));
+			sendto(sock, msg_ptr, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
 
-			sendto(sock, msg, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
-			
-			wclear(win2);
-			wrefresh(win2);
-			memset(msg, '\0', MSG_MAXLEN);
-			//wmove(win2,	0, 0);
-			
 		}
 
 
@@ -107,11 +93,8 @@ int main()
 		else 
 		{
 			//if (strstr(inet_ntoa(income_addr.sin_addr), my_ip) != NULL){continue;} //if its my msg -> skip
-			
-			waddnstr(win1, inet_ntoa(income_addr.sin_addr), income_addr_len);
-			waddnstr(win1, buf, bytes_read);
-			waddch(win1, '\n');
-			//wprintw(win1,"[%s] %s",inet_ntoa(income_addr.sin_addr),buf);
+
+			wprintw(win1,"[%s]>>> %s",inet_ntoa(income_addr.sin_addr),buf);
 			wrefresh(win1);
 			
 			getyx(win2, cur_posY, cur_posX);

@@ -1,16 +1,25 @@
-#include <ncurses.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-
-//#include <>
+#include "terminal_ui.h"
 
 
 //char win_buffer[1024]={0};
 chtype i_char = 0;
 int w_rows, w_cols, cur_posX, cur_posY;
+
+
+struct message 
+{
+	char text[MSG_MAXLEN];
+	char * cursor;
+	int cursor_pos;
+}ms;
+
+void init_struct()
+{
+	ms.cursor = ms.text;
+	memset(ms.text,'\0',MSG_MAXLEN);
+	ms.cursor_pos = 0;
+}
+
 	
 WINDOW * create_msgbox_win()
 {	
@@ -52,42 +61,36 @@ void ncurses_setup()
 		fprintf(stderr,"Ncurses win init fail");
 		exit(1);
 	}
-	
 	refresh();
 
-	cbreak();
+	cbreak();//<<--
 	//nonl();
-	timeout(0);
-	leaveok(stdscr,TRUE);
+	//timeout(0);//<<--
+	//leaveok(stdscr,TRUE);//<<--
 	//raw();
-	//nodelay(stdscr, TRUE);
-	//delwin(stdscr);
+	nodelay(stdscr, TRUE);//<<--
 	//curs_set(0);
-	noecho();
-	keypad(stdscr, TRUE);
-
+	noecho();//<<--
+	keypad(stdscr, TRUE);//<<--
+	init_struct();
+	
 }
 
 
-void send_msg_handler(WINDOW * sendwin)
+char * send_msg_handler(WINDOW * sendwin)
 {
-	
-	//wrefresh(sendwin);	
-	
-	if((i_char = getch())==ERR) return;
+	if((i_char = getch())==ERR) return ms.text;
 	else if (i_char == KEY_BACKSPACE) 
 	{
 		getyx(sendwin, cur_posY, cur_posX);
 		wmove(sendwin,	cur_posY, cur_posX-1);		
 		wdelch(sendwin);
 		wrefresh(sendwin);
-		//continue;
 	}
 	else if (i_char == KEY_DC) 
 	{	
 		wdelch(sendwin);
 		wrefresh(sendwin);
-		//continue;
 	}
 	else if (i_char == KEY_LEFT) 
 	{
@@ -103,20 +106,27 @@ void send_msg_handler(WINDOW * sendwin)
 	}
 	else if (i_char == '\n') 
 	{
-		waddstr(sendwin, "\n\0");
+		*ms.cursor = '\n';
+		ms.cursor++;		
+		*ms.cursor = '\0';
+		ms.cursor = ms.text;
+		ms.cursor_pos = 0;
+		wclear(sendwin);
 		wrefresh(sendwin);
-		return;
+		return ms.text;
 	}
 	else
 	{	
-		//getyx(sendwin, cur_posY, cur_posX);
-		//wmove(sendwin, cur_posY, cur_posX);		
+				
 		wechochar(sendwin, i_char);
-		//waddstr(sendwin, "\0");
-		wrefresh(sendwin);
+		*ms.cursor = (char)i_char;
+		ms.cursor++;
+		return ms.text;
 	}
-
-return;		
+return ms.text;
 }
+
+
+
 
 
