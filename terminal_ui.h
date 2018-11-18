@@ -12,6 +12,7 @@
 
 WINDOW * create_msgbox_win();
 WINDOW * create_msgsend_win();
+int is_ascii(char * x);
 void ncurses_setup();
 char * send_msg_handler(WINDOW * sendwin);
 

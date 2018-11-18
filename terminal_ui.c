@@ -1,23 +1,18 @@
 #include "terminal_ui.h"
 
-
 //char win_buffer[1024]={0};
 chtype i_char = 0;
 int w_rows, w_cols, cur_posX, cur_posY;
 
 
-struct message 
-{
-	char text[MSG_MAXLEN];
-	char * cursor;
-	int cursor_pos;
-}ms;
+char text_buff[MSG_MAXLEN]= {0};
+int text_cursor = 0;
 
-void init_struct()
+
+void init_text()
 {
-	ms.cursor = ms.text;
-	memset(ms.text,'\0',MSG_MAXLEN);
-	ms.cursor_pos = 0;
+    memset(text_buff,'\0',MSG_MAXLEN);
+    text_cursor = 0;
 }
 
 	
@@ -53,7 +48,6 @@ WINDOW * create_msgsend_win()
 	return win;
 }
 
-
 void ncurses_setup()
 {
 	if(!initscr())
@@ -72,14 +66,20 @@ void ncurses_setup()
 	//curs_set(0);
 	noecho();//<<--
 	keypad(stdscr, TRUE);//<<--
-	init_struct();
+    init_text();
 	
 }
 
+int is_ascii(char * x)
+{
+    unsigned int z = (int)*x;
+    if (z > 127) return 0;
+    else return 1;
+}
 
 char * send_msg_handler(WINDOW * sendwin)
 {
-	if((i_char = getch())==ERR) return ms.text;
+    if((i_char = getch())==ERR) return text_buff;
 	else if (i_char == KEY_BACKSPACE) 
 	{
 		getyx(sendwin, cur_posY, cur_posX);
@@ -89,41 +89,85 @@ char * send_msg_handler(WINDOW * sendwin)
 	}
 	else if (i_char == KEY_DC) 
 	{	
+        char temp_buff[MSG_MAXLEN] = {0};
+
+        if (is_ascii(&text_buff[text_cursor]))
+        {
+            strncpy(temp_buff, &text_buff[text_cursor+1], strlen(&text_buff[text_cursor+1]));
+            memset(&text_buff[text_cursor], '\0', strlen(temp_buff)+1);
+            strncpy(&text_buff[text_cursor],temp_buff,strlen(temp_buff));
+        }
+        else
+        {
+            strncpy(temp_buff, &text_buff[text_cursor+2], strlen(&text_buff[text_cursor+2]));
+            memset(&text_buff[text_cursor], '\0', strlen(temp_buff)+2);
+            strncpy(&text_buff[text_cursor],temp_buff,strlen(temp_buff));
+            //if (!(is_ascii(&text_buff[text_cursor])))text_cursor--;
+        }
+/*
+        int temp_cursor = text_cursor;
+
+        if (is_ascii(text_buff[text_cursor]))
+        {
+            for (;text_buff[text_cursor] != '\0';text_cursor++)
+            {
+                text_buff[text_cursor] = text_buff[text_cursor+1];
+            }
+        }
+        else
+        {
+
+            for (;text_buff[text_cursor] != '\0';text_cursor++)
+            {
+                text_buff[text_cursor] = text_buff[text_cursor+2];
+            }
+        }
+        text_cursor = temp_cursor;
+*/
 		wdelch(sendwin);
 		wrefresh(sendwin);
 	}
 	else if (i_char == KEY_LEFT) 
 	{
-		getyx(sendwin, cur_posY, cur_posX);
+        if (text_cursor <= 0) return text_buff;
+        if (is_ascii(&text_buff[text_cursor]) && is_ascii(&text_buff[text_cursor-1]))
+            text_cursor--;
+        else if ((!is_ascii(&text_buff[text_cursor])) && is_ascii(&text_buff[text_cursor-1]))
+            text_cursor --;
+        else text_cursor -=2;
+        getyx(sendwin, cur_posY, cur_posX);
 		wmove(sendwin,	cur_posY, cur_posX-1);
 		wrefresh(sendwin);
 	}
 	else if (i_char == KEY_RIGHT)
 	{
-		getyx(sendwin, cur_posY, cur_posX);
+        if (text_cursor >= (MSG_MAXLEN-3) || (text_buff[text_cursor] =='\0'))return text_buff;
+        if (is_ascii(&text_buff[text_cursor]) && is_ascii(&text_buff[text_cursor+1]))
+        text_cursor++;
+        //else if ((!is_ascii(&text_buff[text_cursor])) && is_ascii(&text_buff[text_cursor-1]))
+        else text_cursor +=2;
+        getyx(sendwin, cur_posY, cur_posX);
 		wmove(sendwin,	cur_posY, cur_posX+1);
 		wrefresh(sendwin);
 	}
 	else if (i_char == '\n') 
 	{
-		*ms.cursor = '\n';
-		ms.cursor++;		
-		*ms.cursor = '\0';
-		ms.cursor = ms.text;
-		ms.cursor_pos = 0;
+
+        text_buff[strlen(text_buff)] = '\n';
+
+        text_cursor = 0;
 		wclear(sendwin);
 		wrefresh(sendwin);
-		return ms.text;
+        return text_buff;
 	}
 	else
 	{	
-				
 		wechochar(sendwin, i_char);
-		*ms.cursor = (char)i_char;
-		ms.cursor++;
-		return ms.text;
+        text_buff[text_cursor] = (char)i_char;
+        text_cursor++;
+        return text_buff;
 	}
-return ms.text;
+return text_buff;
 }
 
 
