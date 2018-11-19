@@ -1,9 +1,11 @@
 #include "terminal_ui.h"
+#define ASCII_MAX 127
 
-chtype i_char = 0;
+long i_char = 0; //preffered type - chtype
 int w_rows, w_cols, cur_posX, cur_posY;
 char text_buff[MSG_MAXLEN]= {0};
 int text_cursor = 0;
+
 
 void init_text()
 {
@@ -66,16 +68,35 @@ void ncurses_setup()
 int is_ascii(char * x)
 {
     unsigned int z = (int)*x;
-    if (z > 127) return 0;
+    if (z > ASCII_MAX) return 0;
     else return 1;
 }
 
 char * send_msg_handler(WINDOW * sendwin)
 {
     if((i_char = getch())==ERR) return text_buff;
-	else if (i_char == KEY_BACKSPACE) 
+
+    else if (i_char == KEY_BACKSPACE)
 	{
-		getyx(sendwin, cur_posY, cur_posX);
+        if (text_cursor < 1) return text_buff;
+
+        char temp_buff[MSG_MAXLEN] = {0};
+        if (is_ascii(&text_buff[text_cursor]))
+        {
+            strncpy(temp_buff, &text_buff[text_cursor], strlen(&text_buff[text_cursor]));
+            memset(&text_buff[text_cursor-1], '\0', strlen(temp_buff)+1);
+            text_cursor--;
+            strncpy(&text_buff[text_cursor],temp_buff,strlen(temp_buff));
+        }
+        else
+        {
+            strncpy(temp_buff, &text_buff[text_cursor-2], strlen(&text_buff[text_cursor]));
+            memset(&text_buff[text_cursor-2], '\0', strlen(temp_buff)+2);
+            text_cursor-=2;
+            strncpy(&text_buff[text_cursor],temp_buff,strlen(temp_buff));
+        }
+
+        getyx(sendwin, cur_posY, cur_posX);
 		wmove(sendwin,	cur_posY, cur_posX-1);		
 		wdelch(sendwin);
 		wrefresh(sendwin);
@@ -95,7 +116,6 @@ char * send_msg_handler(WINDOW * sendwin)
             strncpy(temp_buff, &text_buff[text_cursor+2], strlen(&text_buff[text_cursor+2]));
             memset(&text_buff[text_cursor], '\0', strlen(temp_buff)+2);
             strncpy(&text_buff[text_cursor],temp_buff,strlen(temp_buff));
-            //if (!(is_ascii(&text_buff[text_cursor])))text_cursor--;
         }
 		wdelch(sendwin);
 		wrefresh(sendwin);
@@ -117,6 +137,8 @@ char * send_msg_handler(WINDOW * sendwin)
         if (text_cursor >= (MSG_MAXLEN-3) || (text_buff[text_cursor] =='\0'))return text_buff;
         if (is_ascii(&text_buff[text_cursor]) && is_ascii(&text_buff[text_cursor+1]))
         text_cursor++;
+        else if (is_ascii(&text_buff[text_cursor]) && (!is_ascii(&text_buff[text_cursor+1])))
+        text_cursor++;
         else text_cursor +=2;
         getyx(sendwin, cur_posY, cur_posX);
 		wmove(sendwin,	cur_posY, cur_posX+1);
@@ -124,7 +146,6 @@ char * send_msg_handler(WINDOW * sendwin)
 	}
 	else if (i_char == '\n') 
 	{
-
         text_buff[strlen(text_buff)] = '\n';
 
         text_cursor = 0;
@@ -135,23 +156,24 @@ char * send_msg_handler(WINDOW * sendwin)
     else //putchar in buffer
     {
         char temp_buff[MSG_MAXLEN] = {0};
-        if (text_buff[text_cursor] != '\0')
+        if (text_buff[text_cursor] != '\0') //putchar without shifting (inserting char)
         {
-            if (i_char < 127)
+            if (i_char < ASCII_MAX)
             {
+                getyx(sendwin, cur_posY, cur_posX);
                 strncpy(temp_buff, &text_buff[text_cursor], strlen(&text_buff[text_cursor]));
                 text_buff[text_cursor] = (char)i_char;
-                strncpy(&text_buff[text_cursor+1],temp_buff,strlen(temp_buff));
+                strncpy(&text_buff[++text_cursor],temp_buff,strlen(temp_buff));
 
                 wclear(sendwin);
                 waddstr(sendwin,text_buff);
-                wmove(sendwin, cur_posY, text_cursor);
+                wmove(sendwin, cur_posY, ++cur_posX);
                 wrefresh(sendwin);
                 return text_buff;
             }
-
             else
             {
+                getyx(sendwin, cur_posY, cur_posX);//HERE <-----------------------------------
                 strncpy(temp_buff, &text_buff[text_cursor], strlen(&text_buff[text_cursor]));
                 text_buff[text_cursor] = (char)i_char;
                 i_char = getch();
@@ -160,19 +182,18 @@ char * send_msg_handler(WINDOW * sendwin)
 
                 wclear(sendwin);
                 waddstr(sendwin,text_buff);
-                wmove(sendwin, cur_posY, text_cursor);
+                wmove(sendwin, cur_posY, cur_posX);
                 wrefresh(sendwin);
                 return text_buff;
             }
         }
-
-    else
-            {
-                text_buff[text_cursor] = (char)i_char;
-                text_cursor++;
-                wechochar(sendwin, i_char);
-                return text_buff;
-            }
+        else
+        {
+            text_buff[text_cursor] = (char)i_char;
+            text_cursor++;
+            wechochar(sendwin, i_char);
+            return text_buff;
+        }
     }
 return text_buff;
 }
