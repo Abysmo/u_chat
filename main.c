@@ -1,3 +1,8 @@
+/*
+sudo apt-get install libncursesw5-dev
+sudo apt-get install ncurses-dev
+*/
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -11,7 +16,6 @@
 #include "get_my_ip.h"
 #include "terminal_ui.h"
 #include <locale.h>
-
 
 //#define ADDR "192.168.0.255" // for inet_addr()
 //#define ADDR(A,B,C,D) ((A<<24) | (B << 16) | (C << 8) | (D)) // for htonl()
@@ -94,14 +98,11 @@ int main()
 		msg_ptr = send_msg_handler(win2);
 		
 		if (i_char == KEY_DOWN){endwin();exit(0);} //exit
-		if (i_char == '\n')
+        if (i_char == '\n' && *msg_ptr != '\0') // do not send blank string
 		{
-
             sendto(sock, msg_ptr, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
             memset(msg_ptr, '\0', MSG_MAXLEN);
-
 		}
-
 
         bytes_read = recvfrom(sock_recv, buf, MSG_MAXLEN, MSG_DONTWAIT, (struct sockaddr *)&income_addr, &income_addr_len);
 

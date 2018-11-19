@@ -1,13 +1,9 @@
 #include "terminal_ui.h"
 
-//char win_buffer[1024]={0};
 chtype i_char = 0;
 int w_rows, w_cols, cur_posX, cur_posY;
-
-
 char text_buff[MSG_MAXLEN]= {0};
 int text_cursor = 0;
-
 
 void init_text()
 {
@@ -58,14 +54,11 @@ void ncurses_setup()
 	refresh();
 
 	cbreak();//<<--
-	//nonl();
-	//timeout(0);//<<--
-	//leaveok(stdscr,TRUE);//<<--
 	//raw();
 	nodelay(stdscr, TRUE);//<<--
-	//curs_set(0);
-	noecho();//<<--
-	keypad(stdscr, TRUE);//<<--
+    //curs_set(0); // invis cursor
+    noecho();//<<-- no echo for real cursor
+    keypad(stdscr, TRUE);//<<-- keypad mode
     init_text();
 	
 }
@@ -104,26 +97,6 @@ char * send_msg_handler(WINDOW * sendwin)
             strncpy(&text_buff[text_cursor],temp_buff,strlen(temp_buff));
             //if (!(is_ascii(&text_buff[text_cursor])))text_cursor--;
         }
-/*
-        int temp_cursor = text_cursor;
-
-        if (is_ascii(text_buff[text_cursor]))
-        {
-            for (;text_buff[text_cursor] != '\0';text_cursor++)
-            {
-                text_buff[text_cursor] = text_buff[text_cursor+1];
-            }
-        }
-        else
-        {
-
-            for (;text_buff[text_cursor] != '\0';text_cursor++)
-            {
-                text_buff[text_cursor] = text_buff[text_cursor+2];
-            }
-        }
-        text_cursor = temp_cursor;
-*/
 		wdelch(sendwin);
 		wrefresh(sendwin);
 	}
@@ -144,7 +117,6 @@ char * send_msg_handler(WINDOW * sendwin)
         if (text_cursor >= (MSG_MAXLEN-3) || (text_buff[text_cursor] =='\0'))return text_buff;
         if (is_ascii(&text_buff[text_cursor]) && is_ascii(&text_buff[text_cursor+1]))
         text_cursor++;
-        //else if ((!is_ascii(&text_buff[text_cursor])) && is_ascii(&text_buff[text_cursor-1]))
         else text_cursor +=2;
         getyx(sendwin, cur_posY, cur_posX);
 		wmove(sendwin,	cur_posY, cur_posX+1);
@@ -160,13 +132,48 @@ char * send_msg_handler(WINDOW * sendwin)
 		wrefresh(sendwin);
         return text_buff;
 	}
-	else
-	{	
-		wechochar(sendwin, i_char);
-        text_buff[text_cursor] = (char)i_char;
-        text_cursor++;
-        return text_buff;
-	}
+    else //putchar in buffer
+    {
+        char temp_buff[MSG_MAXLEN] = {0};
+        if (text_buff[text_cursor] != '\0')
+        {
+            if (i_char < 127)
+            {
+                strncpy(temp_buff, &text_buff[text_cursor], strlen(&text_buff[text_cursor]));
+                text_buff[text_cursor] = (char)i_char;
+                strncpy(&text_buff[text_cursor+1],temp_buff,strlen(temp_buff));
+
+                wclear(sendwin);
+                waddstr(sendwin,text_buff);
+                wmove(sendwin, cur_posY, text_cursor);
+                wrefresh(sendwin);
+                return text_buff;
+            }
+
+            else
+            {
+                strncpy(temp_buff, &text_buff[text_cursor], strlen(&text_buff[text_cursor]));
+                text_buff[text_cursor] = (char)i_char;
+                i_char = getch();
+                text_buff[text_cursor+1] = (char)i_char;
+                strncpy(&text_buff[text_cursor+2],temp_buff,strlen(temp_buff));
+
+                wclear(sendwin);
+                waddstr(sendwin,text_buff);
+                wmove(sendwin, cur_posY, text_cursor);
+                wrefresh(sendwin);
+                return text_buff;
+            }
+        }
+
+    else
+            {
+                text_buff[text_cursor] = (char)i_char;
+                text_cursor++;
+                wechochar(sendwin, i_char);
+                return text_buff;
+            }
+    }
 return text_buff;
 }
 
