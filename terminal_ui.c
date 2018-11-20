@@ -1,4 +1,6 @@
 #include "terminal_ui.h"
+#include "users.h"
+
 #define ASCII_MAX 127
 
 long i_char = 0; //preffered type - chtype
@@ -6,19 +8,17 @@ int w_rows, w_cols, cur_posX, cur_posY;
 char text_buff[MSG_MAXLEN]= {0};
 int text_cursor = 0;
 
-
 void init_text()
 {
     memset(text_buff,'\0',MSG_MAXLEN);
     text_cursor = 0;
 }
-
 	
 WINDOW * create_msgbox_win()
 {	
 	getmaxyx(stdscr, w_rows, w_cols);
 
-    WINDOW * win = newwin(w_rows-1, w_cols-15, 0, 16);
+    WINDOW * win = newwin(w_rows-1, w_cols-NAME_LEN, 0, NAME_LEN);
 	//wborder(win,ACS_VLINE,ACS_VLINE,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD);
 	start_color();
     init_pair(3, COLOR_WHITE, COLOR_BLACK);

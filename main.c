@@ -14,6 +14,7 @@ sudo apt-get install ncurses-dev
 #include <errno.h>
 //#include <signal.h> // sig handle
 #include "get_my_ip.h"
+#include "users.h"
 #include "terminal_ui.h"
 #include <locale.h>
 
@@ -25,8 +26,6 @@ sudo apt-get install ncurses-dev
 #endif
 
 #define PORT 5050
-#define IP_LEN 16
-#define NAME_LEN 12
 
 char * msg_ptr=NULL;
 

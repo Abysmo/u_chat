@@ -1,10 +1,12 @@
 #include <stdio.h>
-#include <time.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #define IP_LEN 16
 #define NAME_LEN 16
+#define MAX_USERS 255
 
 
 struct net_user
@@ -13,3 +15,7 @@ struct net_user
     char name[NAME_LEN];
     clock_t refresh_time;
 };
+
+
+struct net_user create_user (char * name, char * ip);
+int check_user (char * name);
