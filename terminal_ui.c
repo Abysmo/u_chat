@@ -18,16 +18,32 @@ WINDOW * create_msgbox_win()
 {	
 	getmaxyx(stdscr, w_rows, w_cols);
 
-	WINDOW * win = newwin(w_rows-1, w_cols, 0, 0);
+    WINDOW * win = newwin(w_rows-1, w_cols-15, 0, 16);
 	//wborder(win,ACS_VLINE,ACS_VLINE,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD);
 	start_color();
-	init_pair(1, COLOR_WHITE, COLOR_CYAN);
-	wcolor_set(win, 1, NULL);
-	wbkgd(win,COLOR_PAIR(1));
+    init_pair(3, COLOR_WHITE, COLOR_BLACK);
+    wcolor_set(win, 3, NULL);
+    wbkgd(win,COLOR_PAIR(3));
 	scrollok(win, TRUE);
 	//wprintw(win,"TEST_BOX\n"); //win test
 	wrefresh(win);		
 	return win;
+}
+
+WINDOW * create_usrbox_win()
+{
+    getmaxyx(stdscr, w_rows, w_cols);
+
+    WINDOW * win = newwin(w_rows-1, 15, 0, 0);
+    //wborder(win,ACS_VLINE,ACS_VLINE,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD);
+    start_color();
+    init_pair(1, COLOR_WHITE, COLOR_CYAN);
+    wcolor_set(win, 1, NULL);
+    wbkgd(win,COLOR_PAIR(1));
+    scrollok(win, TRUE);
+    wprintw(win,"111112222233333"); //win test
+    wrefresh(win);
+    return win;
 }
 
 WINDOW * create_msgsend_win()
@@ -76,6 +92,7 @@ char * send_msg_handler(WINDOW * sendwin)
 {
     if((i_char = getch())==ERR) return text_buff;
 
+    else if (i_char == (KEY_DOWN) || i_char == (KEY_UP) || i_char == (27)){endwin();exit(0);} //exit
     else if (i_char == KEY_BACKSPACE)
 	{
         if (text_cursor < 1) return text_buff;
@@ -173,16 +190,17 @@ char * send_msg_handler(WINDOW * sendwin)
             }
             else
             {
-                getyx(sendwin, cur_posY, cur_posX);//HERE <-----------------------------------
+                getyx(sendwin, cur_posY, cur_posX);
                 strncpy(temp_buff, &text_buff[text_cursor], strlen(&text_buff[text_cursor]));
                 text_buff[text_cursor] = (char)i_char;
                 i_char = getch();
                 text_buff[text_cursor+1] = (char)i_char;
                 strncpy(&text_buff[text_cursor+2],temp_buff,strlen(temp_buff));
+                text_cursor+=2;
 
                 wclear(sendwin);
                 waddstr(sendwin,text_buff);
-                wmove(sendwin, cur_posY, cur_posX);
+                wmove(sendwin, cur_posY, ++cur_posX);
                 wrefresh(sendwin);
                 return text_buff;
             }

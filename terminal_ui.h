@@ -8,10 +8,15 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifndef MSG_MAXLEN
 #define MSG_MAXLEN 1024
+#endif
+
+//#define FORBIDDEN_KEYS
 
 WINDOW * create_msgbox_win();
 WINDOW * create_msgsend_win();
+WINDOW * create_usrbox_win();
 int is_ascii(char * x);
 void ncurses_setup();
 char * send_msg_handler(WINDOW * sendwin);

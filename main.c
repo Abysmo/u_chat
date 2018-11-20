@@ -20,18 +20,13 @@ sudo apt-get install ncurses-dev
 //#define ADDR "192.168.0.255" // for inet_addr()
 //#define ADDR(A,B,C,D) ((A<<24) | (B << 16) | (C << 8) | (D)) // for htonl()
 
+#ifndef MSG_MAXLEN
+#define MSG_MAXLEN 1024
+#endif
 
 #define PORT 5050
-#define MSG_MAXLEN 1024
 #define IP_LEN 16
 #define NAME_LEN 12
-
-
-struct net_user 
-{
-	char ip[IP_LEN];
-	char name[NAME_LEN];
-};
 
 char * msg_ptr=NULL;
 
@@ -88,18 +83,20 @@ int main()
 	ncurses_setup();
 	WINDOW * win1;	
 	WINDOW * win2;
-	win1 = create_msgbox_win();
-	win2 = create_msgsend_win();
-	
+    WINDOW * win3;
+
+    win3 =  create_usrbox_win();
+    win2 = create_msgsend_win();
+    win1 = create_msgbox_win();
 
     while (1)
 	{	
 
 		msg_ptr = send_msg_handler(win2);
 		
-		if (i_char == KEY_DOWN){endwin();exit(0);} //exit
-        if (i_char == '\n' && *msg_ptr != '\0') // do not send blank string
+        if (i_char == '\n' )
 		{
+            if(*msg_ptr == '\n') {*msg_ptr  = '\0'; continue;} // do not send blank string
             sendto(sock, msg_ptr, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
             memset(msg_ptr, '\0', MSG_MAXLEN);
 		}
