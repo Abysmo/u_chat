@@ -1,27 +1,12 @@
 #include "users.h"
 
 
-struct net_user_list network[MAX_USERS]={0};
+struct net_user_list * list_root;
 
-/*
-int check_user (char * service_msg)
-{
-    char * p_result = NULL;
-    char * name = (service_msg + 1);
-
-    for (int i = 0; i < MAX_USERS; i++)
-    {
-        p_result = strstr(network[i].name,name);
-        if (*(&network[i].name) == '\0') return 0;
-        else if (p_result != NULL) return 0;
-    }
-    return 1;
-}
-*/
 
 struct net_user_list * list_init(char * name, char * ip)
 {
-   struct net_user_list * x = malloc(sizeof(struct net_user_list));
+    struct net_user_list * x = (struct net_user_list*)malloc(sizeof(struct net_user_list));
     strncpy(x->ip, ip, IP_LEN);
     strncpy(x->name, name, NAME_LEN);
     x->refresh_time = clock();
@@ -29,31 +14,43 @@ struct net_user_list * list_init(char * name, char * ip)
     return x;
 }
 
-struct net_user_list * create_user (struct net_user_list last_usr, char * name, char * ip)
+
+struct net_user_list * add_user (struct net_user_list * root, char * name, char * ip)
 {
-    struct net_user x, temp;
+    struct net_user_list * x = (struct net_user_list*)malloc(sizeof(struct net_user_list));
     strncpy(x->ip, ip, IP_LEN);
     strncpy(x->name, name, NAME_LEN);
     x->refresh_time = clock();
+    x->next = NULL;
+
+    while (root->next != NULL)
+        root = root->next;
+    root->next = x;
+
     return x;
 }
 
 
-/*
-void sort_users()
+void delete_timeout_users(struct net_user_list * root)
 {
-    struct net_user tmp;
+    struct net_user_list * cursor = root; //get start pos
+    cursor = root->next; //go to next user
+    clock_t before, difference;
+    unsigned int refresh_sec;
 
-    for (int i = 0; i < MAX_USERS; i++)
+    while (cursor->next != NULL)
     {
-        for (;(*(&network[i].name) == '\0') && (*(&network[i+1].name) != '\0');i--)
+        before = cursor->refresh_time;
+        difference = clock() - before;
+        refresh_sec = difference / CLOCKS_PER_SEC;
+        if (refresh_sec >= USER_TIMEOUT_S)
         {
-            tmp = network[i];
-            network[i] = network[i+1];
-            network[i+1] = tmp;
+            struct net_user_list * tmp = root; //second cursor for changing previous poiner
+            while (tmp->next != cursor) //locate cursor pos
+                tmp = tmp->next; //go to next struct
+            tmp->next = cursor->next; // change pointers
+            free(cursor); //free memory
         }
-
+        cursor = cursor->next;
     }
-
 }
-*/

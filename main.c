@@ -88,6 +88,16 @@ int main()
     win2 = create_msgsend_win();
     win1 = create_msgbox_win();
 
+    /*~~~~~~~~TEST FIELDS~~~~~~*/
+    struct net_user_list * root = list_init("TROLOLO", "192.168.0.0");
+    struct net_user_list * next_user = add_user (root, "KEKS", "192.168.255.255");
+    struct net_user_list * super_user = add_user (root, "SUPER", "192.168.255.255");
+    wprintw(win1,"IP-[%s] | NAME-[%s] \n root next addr [%p]", super_user->ip, super_user->name, root->next);
+
+
+    wrefresh(win1);
+    /*~~~~~~~~TEST FIELDS~~END~*/
+
     while (1)
 	{	
 
