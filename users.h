@@ -9,13 +9,13 @@
 #define MAX_USERS 255
 
 
-struct net_user
+struct net_user_list
 {
+    struct  net_user_list * next;
     char ip[IP_LEN];
     char name[NAME_LEN];
     clock_t refresh_time;
 };
 
 
-struct net_user create_user (char * name, char * ip);
-int check_user (char * name);
+
