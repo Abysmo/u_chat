@@ -41,7 +41,7 @@ WINDOW * create_usrbox_win()
     wcolor_set(win, 1, NULL);
     wbkgd(win,COLOR_PAIR(1));
     scrollok(win, TRUE);
-    wprintw(win,"111112222233333"); //win test
+    //wprintw(win,"111112222233333"); //win test
     wrefresh(win);
     return win;
 }
