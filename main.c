@@ -17,6 +17,7 @@ sudo apt-get install ncurses-dev
 #include "users.h"
 #include "terminal_ui.h"
 #include <locale.h>
+#include <time.h>
 
 //#define ADDR "192.168.0.255" // for inet_addr()
 //#define ADDR(A,B,C,D) ((A<<24) | (B << 16) | (C << 8) | (D)) // for htonl()
@@ -25,9 +26,12 @@ sudo apt-get install ncurses-dev
 #define MSG_MAXLEN 1024
 #endif
 
+#define ALIVE_TIMEOUT_S 10 //timeout in seconds for repeating "i'm online" packet
 #define PORT 5050
 
 char * msg_ptr=NULL;
+
+
 
 int main()
 {
@@ -48,9 +52,11 @@ int main()
     addr.sin_family = AF_INET;
     addr.sin_port = htons(PORT);
 	
-	const char * bc_ip = getmyip(0,0);
+    const char * bc_ip = getmyip(0,1);
+    const char * local_ip = getmyip(1,0);
 	if (bc_ip == NULL) {fprintf(stderr,"Failed to set IP ! \n"); exit(1);}
 	addr.sin_addr.s_addr = inet_addr(bc_ip); 
+    /*===========================================*/
 
     /*===============input_sock================*/
     int sock_recv = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP); //UDP (SOCK_NONBLOCK)
@@ -69,12 +75,20 @@ int main()
         fprintf(stderr,"Binding Socket error : %s \n", strerror(errno));
         exit(1);
     }
-    /*===========================================*/
-
 	//bradcast premission
 	unsigned int broadcastPermission = 1;
 	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (void *) &broadcastPermission, sizeof(broadcastPermission)) < 0)
     fprintf(stderr,"Set Socket option error : %s \n", strerror(errno));
+    /*===========================================*/
+
+
+    /* local user init */
+    char local_name[NAME_LEN]={0};
+    printf("Set your nickname (up to 15 chars) : \n");
+    fgets(local_name,NAME_LEN-1,stdin);
+    //read(STDIN_FILENO,local_name,NAME_LEN-1);
+    struct net_user_list * root = list_init(local_name, local_ip);
+
 
 	//ncurses
 	extern chtype i_char;
@@ -89,13 +103,10 @@ int main()
     win1 = create_msgbox_win();
 
     /*~~~~~~~~TEST FIELDS~~~~~~*/
-    struct net_user_list * root = list_init("TROLOLO", "192.168.0.0");
-    struct net_user_list * next_user = add_user (root, "KEKS", "192.168.255.255");
-    struct net_user_list * super_user = add_user (root, "SUPER", "192.168.255.255");
-    wprintw(win1,"IP-[%s] | NAME-[%s] \n root next addr [%p]", super_user->ip, super_user->name, root->next);
-
-
-    wrefresh(win1);
+    //struct net_user_list * next_user = add_user (root, "KEKS", "192.168.255.255");
+    //struct net_user_list * super_user = add_user (root, "SUPER", "192.168.255.255");
+    wprintw(win3,"%s", root->name);
+    wrefresh(win3);
     /*~~~~~~~~TEST FIELDS~~END~*/
 
     while (1)
@@ -130,7 +141,23 @@ int main()
 
 }
 		
+void name_broadcast()
+{
 
+    static clock_t timeout;
+    clock_t difference;
+    unsigned int refresh_sec;
+
+//HERE !
+
+    before = refresh_sec;
+    difference = clock() - before;
+    refresh_sec = difference / CLOCKS_PER_SEC;
+    if (refresh_sec >= USER_TIMEOUT_S)
+
+
+    sendto(sock, msg_ptr, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
+}
 		
 
 

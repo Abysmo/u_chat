@@ -4,7 +4,7 @@
 struct net_user_list * list_root;
 
 
-struct net_user_list * list_init(char * name, char * ip)
+struct net_user_list * list_init(const char * name, const char * ip)
 {
     struct net_user_list * x = (struct net_user_list*)malloc(sizeof(struct net_user_list));
     strncpy(x->ip, ip, IP_LEN);
@@ -24,7 +24,12 @@ struct net_user_list * add_user (struct net_user_list * root, char * name, char 
     x->next = NULL;
 
     while (root->next != NULL)
+    {
+        if (strstr(root->ip,ip)) {root->refresh_time = clock(); free(x); return NULL;} //if user already exist in list, refresh timer.
+        //if (strstr(root->name,name)) {free(x); return NULL;}
         root = root->next;
+    }
+
     root->next = x;
 
     return x;
@@ -54,3 +59,7 @@ void delete_timeout_users(struct net_user_list * root)
         cursor = cursor->next;
     }
 }
+
+
+
+

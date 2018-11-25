@@ -17,6 +17,6 @@ struct net_user_list
     clock_t refresh_time;
 };
 
-struct net_user_list * list_init(char * name, char * ip);
+struct net_user_list * list_init(const char * name, const char * ip);
 struct net_user_list * add_user (struct net_user_list * root, char * name, char * ip);
 void delete_timeout_users(struct net_user_list * root);
