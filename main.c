@@ -28,21 +28,25 @@ sudo apt-get install ncurses-dev
 
 #define ALIVE_TIMEOUT_S 10 //timeout in seconds for repeating "i'm online" packet
 #define PORT 5050
+#define SRVC_CMD_SEP 0x1e //separator for dividing text and service messages
+
+void name_broadcast(char * name);
 
 char * msg_ptr=NULL;
-
-
+char name_msg[NAME_LEN+1];
+int sock;
+struct sockaddr_in addr;
 
 int main()
 {
 	setlocale(0, ""); //for unicode
 	unsigned int income_addr_len;
-    struct sockaddr_in addr,local_addr, income_addr;
+    struct sockaddr_in local_addr, income_addr;
 	char buf[MSG_MAXLEN]={0};
 	int bytes_read;
 
     /*===============output_sock=================*/
-    int sock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP); //UDP (SOCK_NONBLOCK)
+    sock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP); //UDP (SOCK_NONBLOCK)
     if(sock < 0)
     {
         fprintf(stderr,"Socket [addr] error : %s \n", strerror(errno));
@@ -89,6 +93,10 @@ int main()
     //read(STDIN_FILENO,local_name,NAME_LEN-1);
     struct net_user_list * root = list_init(local_name, local_ip);
 
+    /*making name for broadcast*/
+    *name_msg = SRVC_CMD_SEP;
+    strcat(name_msg, local_name);
+
 
 	//ncurses
 	extern chtype i_char;
@@ -111,7 +119,7 @@ int main()
 
     while (1)
 	{	
-
+        name_broadcast(name_msg);
 		msg_ptr = send_msg_handler(win2);
 		
         if (i_char == '\n' )
@@ -141,22 +149,25 @@ int main()
 
 }
 		
-void name_broadcast()
+void name_broadcast(char * name)
 {
-
-    static clock_t timeout;
+    static clock_t before = 0;
     clock_t difference;
     unsigned int refresh_sec;
+    if (!before)
+    {
+        before = clock();
+        sendto(sock, name, NAME_LEN+1, 0,(struct sockaddr *)&addr, sizeof(addr));
+        return;
+    }
 
-//HERE !
-
-    before = refresh_sec;
     difference = clock() - before;
     refresh_sec = difference / CLOCKS_PER_SEC;
     if (refresh_sec >= USER_TIMEOUT_S)
-
-
-    sendto(sock, msg_ptr, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
+    {
+        sendto(sock, name, NAME_LEN+1, 0,(struct sockaddr *)&addr, sizeof(addr));
+        before = clock();
+    }
 }
 		
 
