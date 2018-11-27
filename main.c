@@ -26,11 +26,12 @@ sudo apt-get install ncurses-dev
 #define MSG_MAXLEN 1024
 #endif
 
+
 #define PORT 5050
 #define SRVC_CMD_SEP 0x1e //separator for dividing text and service messages
 
 void name_broadcast(char * name);
-void refresh_list(WINDOW * list_win, const struct net_user_list * root);
+void refresh_list(WINDOW * list_win, net_users_t * root);
 
 char * msg_ptr=NULL;
 char name_msg[NAME_LEN+1];
@@ -91,7 +92,7 @@ int main()
     printf("Set your nickname (up to 15 chars) : \n");
     fgets(local_name,NAME_LEN-1,stdin);
     //read(STDIN_FILENO,local_name,NAME_LEN-1);
-    const struct net_user_list * root = list_init(local_name, local_ip);
+    net_users_t * root = list_init(local_name, local_ip);
 
     /*making name for broadcast*/
     *name_msg = SRVC_CMD_SEP;
@@ -129,6 +130,7 @@ int main()
         usleep(10000);
         name_broadcast(name_msg);
         refresh_list(win3, root);
+        //delete_timeout_users(root);
         msg_ptr = key_handler(win2);
 		
         if (i_char == '\n' )
@@ -166,7 +168,7 @@ int main()
 void name_broadcast(char * name)
 {
     static time_t before = 0;
-    time_t difference;
+    time_t difference = 0;
     if (!before)
     {
         before = time(NULL);
@@ -183,11 +185,12 @@ void name_broadcast(char * name)
 }
 
 
-void refresh_list(WINDOW * list_win, const struct net_user_list * root)
+
+void refresh_list(WINDOW * list_win, net_users_t * root)
 {
-    struct net_user_list * cursor = root;
+    net_users_t * cursor = root;
     static time_t before = 0;
-    time_t difference;
+    time_t difference = 0;
     if (!before)
     {
         before = time(NULL);
@@ -197,6 +200,7 @@ void refresh_list(WINDOW * list_win, const struct net_user_list * root)
         {
             wprintw(list_win,"%s", root->name);
             cursor = cursor->next;
+            wprintw(list_win,"asdfg"); //TEST !!!!!!
         }
         while (cursor->next !=NULL);
         wrefresh(list_win);
