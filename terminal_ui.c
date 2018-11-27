@@ -88,7 +88,7 @@ int is_ascii(char * x)
     else return 1;
 }
 
-char * send_msg_handler(WINDOW * sendwin)
+char * key_handler(WINDOW * sendwin)
 {
     if((i_char = getch())==ERR) return text_buff;
 

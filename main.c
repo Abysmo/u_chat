@@ -26,11 +26,11 @@ sudo apt-get install ncurses-dev
 #define MSG_MAXLEN 1024
 #endif
 
-#define ALIVE_TIMEOUT_S 10 //timeout in seconds for repeating "i'm online" packet
 #define PORT 5050
 #define SRVC_CMD_SEP 0x1e //separator for dividing text and service messages
 
 void name_broadcast(char * name);
+void refresh_list(WINDOW * list_win, const struct net_user_list * root);
 
 char * msg_ptr=NULL;
 char name_msg[NAME_LEN+1];
@@ -91,7 +91,7 @@ int main()
     printf("Set your nickname (up to 15 chars) : \n");
     fgets(local_name,NAME_LEN-1,stdin);
     //read(STDIN_FILENO,local_name,NAME_LEN-1);
-    struct net_user_list * root = list_init(local_name, local_ip);
+    const struct net_user_list * root = list_init(local_name, local_ip);
 
     /*making name for broadcast*/
     *name_msg = SRVC_CMD_SEP;
@@ -110,17 +110,26 @@ int main()
     win2 = create_msgsend_win();
     win1 = create_msgbox_win();
 
-    /*~~~~~~~~TEST FIELDS~~~~~~*/
+    /*~~~~~~~~TEST FIELDS~~~~~~
     //struct net_user_list * next_user = add_user (root, "KEKS", "192.168.255.255");
     //struct net_user_list * super_user = add_user (root, "SUPER", "192.168.255.255");
-    wprintw(win3,"%s", root->name);
-    wrefresh(win3);
-    /*~~~~~~~~TEST FIELDS~~END~*/
+    time_t tim_tmp = time(NULL);
+    wprintw(win1,"%d\n", tim_tmp);
+    wrefresh(win1);
+
+    sleep(1);
+    tim_tmp = time(NULL);
+    wprintw(win1,"%d \n", tim_tmp);
+    wrefresh(win1);
+
+    ~~~~~~~~TEST FIELDS~~END~*/
 
     while (1)
 	{	
+        usleep(10000);
         name_broadcast(name_msg);
-		msg_ptr = send_msg_handler(win2);
+        refresh_list(win3, root);
+        msg_ptr = key_handler(win2);
 		
         if (i_char == '\n' )
 		{
@@ -135,6 +144,11 @@ int main()
 		else 
 		{
 			//if (strstr(inet_ntoa(income_addr.sin_addr), my_ip) != NULL){continue;} //if its my msg -> skip
+
+            if (*buf == SRVC_CMD_SEP)
+            {
+                add_user (root, &buf[1], inet_ntoa(income_addr.sin_addr)); //add user if it's service msg
+            }
 
             wprintw(win1,"[%s]>>> %s",inet_ntoa(income_addr.sin_addr),buf);
 			wrefresh(win1);
@@ -151,24 +165,59 @@ int main()
 		
 void name_broadcast(char * name)
 {
-    static clock_t before = 0;
-    clock_t difference;
-    unsigned int refresh_sec;
+    static time_t before = 0;
+    time_t difference;
     if (!before)
     {
-        before = clock();
+        before = time(NULL);
         sendto(sock, name, NAME_LEN+1, 0,(struct sockaddr *)&addr, sizeof(addr));
         return;
     }
 
-    difference = clock() - before;
-    refresh_sec = difference / CLOCKS_PER_SEC;
-    if (refresh_sec >= USER_TIMEOUT_S)
+    difference =  time(NULL) - before;
+    if (difference >= USER_TIMEOUT_S)
     {
         sendto(sock, name, NAME_LEN+1, 0,(struct sockaddr *)&addr, sizeof(addr));
-        before = clock();
+        before = time(NULL);
     }
 }
-		
 
+
+void refresh_list(WINDOW * list_win, const struct net_user_list * root)
+{
+    struct net_user_list * cursor = root;
+    static time_t before = 0;
+    time_t difference;
+    if (!before)
+    {
+        before = time(NULL);
+        //print list here
+        wclear(list_win);
+        do
+        {
+            wprintw(list_win,"%s", root->name);
+            cursor = cursor->next;
+        }
+        while (cursor->next !=NULL);
+        wrefresh(list_win);
+        return;
+    }
+    //check timer
+    difference = time(NULL) - before;
+    if (difference >= USER_TIMEOUT_S)
+    {
+        //print list here
+        before = time(NULL);
+        wclear(list_win);
+        do
+        {
+            wprintw(list_win,"%s", root->name);
+            cursor = cursor->next;
+        }
+        while (cursor->next !=NULL);
+        wrefresh(list_win);
+        return;
+    }
+    return;
+}
 

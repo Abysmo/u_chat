@@ -20,7 +20,7 @@ WINDOW * create_msgsend_win();
 WINDOW * create_usrbox_win();
 int is_ascii(char * x);
 void ncurses_setup();
-char * send_msg_handler(WINDOW * sendwin);
+char * key_handler(WINDOW * sendwin);
 
 
 #endif
