@@ -130,7 +130,7 @@ int main()
         usleep(10000);
         name_broadcast(name_msg);
         refresh_list(win3, root);
-        //delete_timeout_users(root);
+        delete_timeout_users(root);
         msg_ptr = key_handler(win2);
 		
         if (i_char == '\n' )
@@ -139,6 +139,7 @@ int main()
             sendto(sock, msg_ptr, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
             memset(msg_ptr, '\0', MSG_MAXLEN);
 		}
+
 
         bytes_read = recvfrom(sock_recv, buf, MSG_MAXLEN, MSG_DONTWAIT, (struct sockaddr *)&income_addr, &income_addr_len);
 
@@ -150,6 +151,7 @@ int main()
             if (*buf == SRVC_CMD_SEP)
             {
                 add_user (root, &buf[1], inet_ntoa(income_addr.sin_addr)); //add user if it's service msg
+                break;
             }
 
             wprintw(win1,"[%s]>>> %s",inet_ntoa(income_addr.sin_addr),buf);
@@ -194,31 +196,31 @@ void refresh_list(WINDOW * list_win, net_users_t * root)
     if (!before)
     {
         before = time(NULL);
-        //print list here
         wclear(list_win);
+        //print list here
         do
         {
             wprintw(list_win,"%s", root->name);
             cursor = cursor->next;
-            wprintw(list_win,"asdfg"); //TEST !!!!!!
         }
-        while (cursor->next !=NULL);
+        while (cursor != NULL);
         wrefresh(list_win);
         return;
     }
+
     //check timer
     difference = time(NULL) - before;
     if (difference >= USER_TIMEOUT_S)
     {
-        //print list here
         before = time(NULL);
         wclear(list_win);
+        //print list here
         do
         {
             wprintw(list_win,"%s", root->name);
             cursor = cursor->next;
         }
-        while (cursor->next !=NULL);
+        while (cursor !=NULL);
         wrefresh(list_win);
         return;
     }

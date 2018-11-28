@@ -11,7 +11,7 @@
 
 typedef struct net_user_list
 {
-    struct  net_user_list * next;
+    struct net_user_list * next;
     char ip[IP_LEN];
     char name[NAME_LEN];
     time_t refresh_time;
