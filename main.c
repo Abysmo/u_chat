@@ -143,15 +143,16 @@ int main()
 
         bytes_read = recvfrom(sock_recv, buf, MSG_MAXLEN, MSG_DONTWAIT, (struct sockaddr *)&income_addr, &income_addr_len);
 
-        if((bytes_read <= 0) || (bytes_read == EAGAIN)) {continue;}
-		else 
+        //if((bytes_read <= 0) || (bytes_read == EAGAIN)) {wprintw(win1,"error - %s", strerror(errno)); wrefresh(win1); continue;}
+        if(bytes_read <= 0) {continue;}
+        else
 		{
 			//if (strstr(inet_ntoa(income_addr.sin_addr), my_ip) != NULL){continue;} //if its my msg -> skip
 
             if (*buf == SRVC_CMD_SEP)
             {
                 add_user (root, &buf[1], inet_ntoa(income_addr.sin_addr)); //add user if it's service msg
-                break;
+                continue;
             }
 
             wprintw(win1,"[%s]>>> %s",inet_ntoa(income_addr.sin_addr),buf);
@@ -174,14 +175,14 @@ void name_broadcast(char * name)
     if (!before)
     {
         before = time(NULL);
-        sendto(sock, name, NAME_LEN+1, 0,(struct sockaddr *)&addr, sizeof(addr));
+        sendto(sock, name, NAME_LEN, 0,(struct sockaddr *)&addr, sizeof(addr));
         return;
     }
 
     difference =  time(NULL) - before;
     if (difference >= USER_TIMEOUT_S)
     {
-        sendto(sock, name, NAME_LEN+1, 0,(struct sockaddr *)&addr, sizeof(addr));
+        sendto(sock, name, NAME_LEN, 0,(struct sockaddr *)&addr, sizeof(addr));
         before = time(NULL);
     }
 }
@@ -200,7 +201,7 @@ void refresh_list(WINDOW * list_win, net_users_t * root)
         //print list here
         do
         {
-            wprintw(list_win,"%s", root->name);
+            wprintw(list_win,"%s", cursor->name);
             cursor = cursor->next;
         }
         while (cursor != NULL);
@@ -217,7 +218,7 @@ void refresh_list(WINDOW * list_win, net_users_t * root)
         //print list here
         do
         {
-            wprintw(list_win,"%s", root->name);
+            wprintw(list_win,"%s", cursor->name);
             cursor = cursor->next;
         }
         while (cursor !=NULL);
