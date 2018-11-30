@@ -1,6 +1,7 @@
 #include "users.h"
 
 
+/*making root of list*/
 net_users_t * list_init(const char * name, const char * ip)
 {
     net_users_t * x = (net_users_t*)malloc(sizeof(net_users_t));
@@ -12,13 +13,14 @@ net_users_t * list_init(const char * name, const char * ip)
 }
 
 
+/*add new user if not already exist*/
 net_users_t * add_user (net_users_t * root, char * name, char * ip)
 {
     net_users_t * cursor = root;
     while (cursor->next != NULL)
     {
         if (strstr(cursor->ip,ip)) {cursor->refresh_time = time(NULL); return NULL;} //if user already exist in list, refresh timer.
-        //if (strstr(root->name,name)) {free(x); return NULL;}
+        //if (strstr(root->name,name)) {return NULL;}
         cursor = cursor->next;
     }
 
@@ -35,7 +37,7 @@ net_users_t * add_user (net_users_t * root, char * name, char * ip)
 }
 
 
-
+/*delete timeout users from list*/
 void delete_timeout_users(net_users_t * root)
 {
     net_users_t * cursor = root->next; //get start pos
@@ -60,5 +62,31 @@ void delete_timeout_users(net_users_t * root)
 }
 
 
+/*Find user in list*/
+char * find_user(net_users_t * root, char * ip)
+{
+    net_users_t * cursor = root;
+    do
+    {
+        if (strstr(cursor->ip,ip)) {cursor->refresh_time = time(NULL); return cursor->name;}
+        cursor = cursor->next;
+    }
+    while (cursor != NULL);
+    return NULL;
+}
 
+
+/*Free resources*/
+void close_list(net_users_t * root)
+{
+    net_users_t * cursor;
+    do
+    {
+        cursor = root->next;
+        free(root);
+        root = cursor;
+    }
+    while (cursor != NULL);
+    return;
+}
 

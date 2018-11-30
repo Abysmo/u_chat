@@ -20,3 +20,5 @@ typedef struct net_user_list
 net_users_t * list_init(const char * name, const char * ip);
 net_users_t * add_user (net_users_t * root, char * name, char * ip);
 void delete_timeout_users(net_users_t * root);
+char * find_user(net_users_t * root, char * ip); /*Find user in list (return name from ip address otherwise NULL*/
+void close_list(net_users_t * root);

@@ -32,11 +32,15 @@ sudo apt-get install ncurses-dev
 
 void name_broadcast(char * name);
 void refresh_list(WINDOW * list_win, net_users_t * root);
+char * remove_newline(char * str);
+
 
 char * msg_ptr=NULL;
 char name_msg[NAME_LEN+1];
-int sock;
+extern int cur_posX, cur_posY;
+int sock, sock_recv;
 struct sockaddr_in addr;
+net_users_t * root;
 
 int main()
 {
@@ -45,6 +49,7 @@ int main()
     struct sockaddr_in local_addr, income_addr;
 	char buf[MSG_MAXLEN]={0};
 	int bytes_read;
+    char * income_name;
 
     /*===============output_sock=================*/
     sock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP); //UDP (SOCK_NONBLOCK)
@@ -64,7 +69,7 @@ int main()
     /*===========================================*/
 
     /*===============input_sock================*/
-    int sock_recv = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP); //UDP (SOCK_NONBLOCK)
+    sock_recv = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP); //UDP (SOCK_NONBLOCK)
     if(sock_recv < 0)
     {
         fprintf(stderr,"Socket [local_addr] error : %s \n", strerror(errno));
@@ -91,8 +96,14 @@ int main()
     char local_name[NAME_LEN]={0};
     printf("Set your nickname (up to 15 chars) : \n");
     fgets(local_name,NAME_LEN-1,stdin);
+
+    /*cut newline('\n') from name
+    char * cut_nl = strchr(local_name, '\n');
+    if (cut_nl) *cut_nl= '\0';
+    */
+
     //read(STDIN_FILENO,local_name,NAME_LEN-1);
-    net_users_t * root = list_init(local_name, local_ip);
+    root = list_init(local_name, local_ip);
 
     /*making name for broadcast*/
     *name_msg = SRVC_CMD_SEP;
@@ -101,7 +112,7 @@ int main()
 
 	//ncurses
 	extern chtype i_char;
-	extern int cur_posX, cur_posY;
+//	extern int cur_posX, cur_posY;
 	ncurses_setup();
 	WINDOW * win1;	
 	WINDOW * win2;
@@ -111,29 +122,18 @@ int main()
     win2 = create_msgsend_win();
     win1 = create_msgbox_win();
 
-    /*~~~~~~~~TEST FIELDS~~~~~~
-    //struct net_user_list * next_user = add_user (root, "KEKS", "192.168.255.255");
-    //struct net_user_list * super_user = add_user (root, "SUPER", "192.168.255.255");
-    time_t tim_tmp = time(NULL);
-    wprintw(win1,"%d\n", tim_tmp);
-    wrefresh(win1);
+    refresh_list(win3, root);
 
-    sleep(1);
-    tim_tmp = time(NULL);
-    wprintw(win1,"%d \n", tim_tmp);
-    wrefresh(win1);
-
-    ~~~~~~~~TEST FIELDS~~END~*/
-
+    /*~~~~~MAIN CYCLE~~~~~*/
     while (1)
 	{	
         usleep(10000);
-        name_broadcast(name_msg);
         refresh_list(win3, root);
+        name_broadcast(name_msg);
         delete_timeout_users(root);
         msg_ptr = key_handler(win2);
 		
-        if (i_char == '\n' )
+        if (i_char == '\n' ) /*ENTER KEY PRESSED*/
 		{
             if(*msg_ptr == '\n') {*msg_ptr  = '\0'; continue;} // do not send blank string
             sendto(sock, msg_ptr, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
@@ -154,13 +154,10 @@ int main()
                 add_user (root, &buf[1], inet_ntoa(income_addr.sin_addr)); //add user if it's service msg
                 continue;
             }
+            if ((income_name = find_user(root, inet_ntoa(income_addr.sin_addr))) == NULL) continue;
 
-            wprintw(win1,"[%s]>>> %s",inet_ntoa(income_addr.sin_addr),buf);
+            wprintw(win1,"[%s]-> %s", remove_newline(income_name) , buf);
 			wrefresh(win1);
-			
-			getyx(win2, cur_posY, cur_posX);
-			wmove(win2,	cur_posY, cur_posX);
-			wrefresh(win2);	
 			continue;
 		}
 
@@ -187,7 +184,12 @@ void name_broadcast(char * name)
     }
 }
 
-
+char * remove_newline(char * str)
+{
+    char * cut_nl = strchr(str, '\n');
+    if (cut_nl) *cut_nl= '\0';
+    return str;
+}
 
 void refresh_list(WINDOW * list_win, net_users_t * root)
 {
@@ -198,10 +200,12 @@ void refresh_list(WINDOW * list_win, net_users_t * root)
     {
         before = time(NULL);
         wclear(list_win);
+        getyx(list_win, cur_posY, cur_posX);
         //print list here
         do
         {
             wprintw(list_win,"%s", cursor->name);
+            wmove(list_win,	++cur_posY, cur_posX);
             cursor = cursor->next;
         }
         while (cursor != NULL);
@@ -220,6 +224,7 @@ void refresh_list(WINDOW * list_win, net_users_t * root)
         {
             wprintw(list_win,"%s", cursor->name);
             cursor = cursor->next;
+            wmove(list_win,	++cur_posY, cur_posX);
         }
         while (cursor !=NULL);
         wrefresh(list_win);
