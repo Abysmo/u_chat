@@ -31,13 +31,11 @@ sudo apt-get install ncurses-dev
 #define SRVC_CMD_SEP 0x1e //separator for dividing text and service messages
 
 void name_broadcast(char * name);
-void refresh_list(WINDOW * list_win, net_users_t * root);
+void refresh_list(WINDOW * list_win, net_users_t * root, int force_refresh);
 char * remove_newline(char * str);
-
 
 char * msg_ptr=NULL;
 char name_msg[NAME_LEN+1];
-extern int cur_posX, cur_posY;
 int sock, sock_recv;
 struct sockaddr_in addr;
 net_users_t * root;
@@ -109,29 +107,21 @@ int main()
     *name_msg = SRVC_CMD_SEP;
     strcat(name_msg, local_name);
 
-
 	//ncurses
-	extern chtype i_char;
-//	extern int cur_posX, cur_posY;
 	ncurses_setup();
-	WINDOW * win1;	
-	WINDOW * win2;
-    WINDOW * win3;
-
-    win3 =  create_usrbox_win();
-    win2 = create_msgsend_win();
-    win1 = create_msgbox_win();
-
-    refresh_list(win3, root);
+    USR_BOX =  create_usrbox_win();
+    OUT_BOX = create_msgsend_win();
+    IN_BOX = create_msgbox_win();
+    refresh_list(USR_BOX, root,1);
 
     /*~~~~~MAIN CYCLE~~~~~*/
     while (1)
 	{	
         usleep(10000);
-        refresh_list(win3, root);
+        refresh_list(USR_BOX, root, 0);
         name_broadcast(name_msg);
         delete_timeout_users(root);
-        msg_ptr = key_handler(win2);
+        msg_ptr = key_handler(OUT_BOX);
 		
         if (i_char == '\n' ) /*ENTER KEY PRESSED*/
 		{
@@ -140,10 +130,7 @@ int main()
             memset(msg_ptr, '\0', MSG_MAXLEN);
 		}
 
-
         bytes_read = recvfrom(sock_recv, buf, MSG_MAXLEN, MSG_DONTWAIT, (struct sockaddr *)&income_addr, &income_addr_len);
-
-        //if((bytes_read <= 0) || (bytes_read == EAGAIN)) {wprintw(win1,"error - %s", strerror(errno)); wrefresh(win1); continue;}
         if(bytes_read <= 0) {continue;}
         else
 		{
@@ -152,12 +139,13 @@ int main()
             if (*buf == SRVC_CMD_SEP)
             {
                 add_user (root, &buf[1], inet_ntoa(income_addr.sin_addr)); //add user if it's service msg
+                refresh_list(USR_BOX, root, 1);
                 continue;
             }
             if ((income_name = find_user(root, inet_ntoa(income_addr.sin_addr))) == NULL) continue;
 
-            wprintw(win1,"[%s]-> %s", remove_newline(income_name) , buf);
-			wrefresh(win1);
+            wprintw(IN_BOX,"[%s]-> %s", remove_newline(income_name) , buf);
+            wrefresh(IN_BOX);
 			continue;
 		}
 
@@ -191,12 +179,12 @@ char * remove_newline(char * str)
     return str;
 }
 
-void refresh_list(WINDOW * list_win, net_users_t * root)
+void refresh_list(WINDOW * list_win, net_users_t * root, int force_refresh)
 {
     net_users_t * cursor = root;
     static time_t before = 0;
     time_t difference = 0;
-    if (!before)
+    if (!before || force_refresh)
     {
         before = time(NULL);
         wclear(list_win);

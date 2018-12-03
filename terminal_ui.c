@@ -3,8 +3,6 @@
 
 #define ASCII_MAX 127
 
-long i_char = 0; //preffered type - chtype
-int w_rows, w_cols, cur_posX, cur_posY;
 char text_buff[MSG_MAXLEN]= {0};
 int text_cursor = 0;
 
@@ -95,7 +93,7 @@ char * key_handler(WINDOW * sendwin)
 
     if((i_char = getch())==ERR) return text_buff;
 
-    else if (i_char == (KEY_DOWN) || i_char == (KEY_UP) || i_char == (27)) /*exit*/
+    else if (i_char == 27) /*exit*/
     {
         extern  net_users_t * root;
         close_list(root);
@@ -103,6 +101,11 @@ char * key_handler(WINDOW * sendwin)
         close(sock_recv);
         endwin();
         exit(0);
+    }
+    else if (i_char == KEY_UP) /*scroll UP*/
+    {
+        wscrl(IN_BOX, -1);
+        wrefresh(IN_BOX);
     }
     else if (i_char == KEY_BACKSPACE)
 	{
