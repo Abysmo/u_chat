@@ -95,11 +95,6 @@ int main()
     printf("Set your nickname (up to 15 chars) : \n");
     fgets(local_name,NAME_LEN-1,stdin);
 
-    /*cut newline('\n') from name
-    char * cut_nl = strchr(local_name, '\n');
-    if (cut_nl) *cut_nl= '\0';
-    */
-
     //read(STDIN_FILENO,local_name,NAME_LEN-1);
     root = list_init(local_name, local_ip);
 

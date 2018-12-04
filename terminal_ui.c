@@ -1,10 +1,10 @@
 #include "terminal_ui.h"
 #include "users.h"
 
-#define ASCII_MAX 127
 
 char text_buff[MSG_MAXLEN]= {0};
 int text_cursor = 0;
+
 
 void init_text()
 {
@@ -52,7 +52,6 @@ WINDOW * create_msgsend_win()
 	wbkgd(win,COLOR_PAIR(2));
 	nodelay(win, TRUE);
 	keypad(win, TRUE);
-	//wprintw(win,"TEST_SEND\n"); //test
 	wrefresh(win);
 	return win;
 }
@@ -105,6 +104,11 @@ char * key_handler(WINDOW * sendwin)
     else if (i_char == KEY_UP) /*scroll UP*/
     {
         wscrl(IN_BOX, -1);
+        wrefresh(IN_BOX);
+    }
+    else if (i_char == KEY_DOWN) /*scroll DOWN*/
+    {
+        wscrl(IN_BOX, 1);
         wrefresh(IN_BOX);
     }
     else if (i_char == KEY_BACKSPACE)
@@ -191,7 +195,6 @@ char * key_handler(WINDOW * sendwin)
         {
             if (i_char < ASCII_MAX)
             {
-                //getyx(sendwin, cur_posY, cur_posX); <<----TEST(remove if text edit ok)
                 strncpy(temp_buff, &text_buff[text_cursor], strlen(&text_buff[text_cursor]));
                 text_buff[text_cursor] = (char)i_char;
                 strncpy(&text_buff[++text_cursor],temp_buff,strlen(temp_buff));
@@ -204,7 +207,6 @@ char * key_handler(WINDOW * sendwin)
             }
             else
             {
-                //getyx(sendwin, cur_posY, cur_posX); <<----TEST(remove if text edit ok)
                 strncpy(temp_buff, &text_buff[text_cursor], strlen(&text_buff[text_cursor]));
                 text_buff[text_cursor] = (char)i_char;
                 i_char = getch();
@@ -223,7 +225,15 @@ char * key_handler(WINDOW * sendwin)
         {
             text_buff[text_cursor] = (char)i_char;
             text_cursor++;
-            wechochar(sendwin, i_char);
+
+            /*TEST*/
+            wclear(sendwin);
+            if (text_cursor > sendwin->_maxx)
+                waddstr(sendwin,&text_buff[text_cursor - sendwin->_maxx]);
+            waddstr(sendwin,text_buff);
+
+            wrefresh(sendwin);
+
             return text_buff;
         }
     }

@@ -16,6 +16,8 @@
 #define OUT_BOX     w2
 #define USR_BOX     w3
 
+#define ASCII_MAX 127
+
 //#define FORBIDDEN_KEYS
 
 WINDOW * create_msgbox_win();
