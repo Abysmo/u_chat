@@ -45,7 +45,8 @@ WINDOW * create_msgsend_win()
 {	
 	getmaxyx(stdscr, w_rows, w_cols);
 
-	WINDOW * win = newwin(1, w_cols, w_rows-1, 0);
+    //WINDOW * win = newwin(1, w_cols, w_rows-1, 0);
+    WINDOW * win = newwin(1, MSG_MAXLEN, w_rows-1, 0);
 	start_color();
 	init_pair(2, COLOR_WHITE, COLOR_BLUE);
 	wcolor_set(win, 2, NULL);
@@ -53,7 +54,7 @@ WINDOW * create_msgsend_win()
 	nodelay(win, TRUE);
 	keypad(win, TRUE);
 
-    scrollok(win, TRUE);
+    //scrollok(win, TRUE);
 
 	wrefresh(win);
 	return win;
@@ -159,64 +160,50 @@ char * key_handler(WINDOW * sendwin)
 	}
 	else if (i_char == KEY_LEFT) 
 	{
+        /*Buffer cursor move*/
         if (text_cursor <= 0) return text_buff;
         if (is_ascii(&text_buff[text_cursor]) && is_ascii(&text_buff[text_cursor-1]))
             text_cursor--;
         else if ((!is_ascii(&text_buff[text_cursor])) && is_ascii(&text_buff[text_cursor-1]))
             text_cursor --;
         else text_cursor -=2;
-        getyx(sendwin, cur_posY, cur_posX);
-		wmove(sendwin,	cur_posY, cur_posX-1);
-        /*TEST
-        wclear(sendwin);
-        if (text_cursor > sendwin->_maxx)
+        /*terminal cursor move*/
+        //getyx(sendwin, cur_posY, cur_posX);
+        //wmove(sendwin, cur_posY, cur_posX-1);
+        /*TEST*/
+        //wclear(sendwin);
+        if ((!cur_posX) && text_cursor)
         {
-            waddstr(sendwin,&text_buff[text_cursor - sendwin->_maxx]);
-            getyx(sendwin, cur_posY, cur_posX);
-            wmove(sendwin,	cur_posY, cur_posX-1);
+            wclear(sendwin);
+            waddstr(sendwin,&text_buff[text_cursor]);
+            //getyx(sendwin, cur_posY, cur_posX);
+            wmove(sendwin, 0, 0);
             wrefresh(sendwin);
             return text_buff;
         }
         else
         {
-            waddstr(sendwin,text_buff);
-            getyx(sendwin, cur_posY, cur_posX);
-            wmove(sendwin,	cur_posY, cur_posX-1);
+            //waddstr(sendwin,text_buff);
+            //getyx(sendwin, cur_posY, cur_posX);
+            wmove(sendwin, 0, --cur_posX);
             wrefresh(sendwin);
             return text_buff;
         }
-        END TEST*/
+        /*END TEST*/
         wrefresh(sendwin);
 	}
 	else if (i_char == KEY_RIGHT)
 	{
+        /*Buffer cursor move*/
         if (text_cursor >= (MSG_MAXLEN-3) || (text_buff[text_cursor] =='\0'))return text_buff;
         if (is_ascii(&text_buff[text_cursor]) && is_ascii(&text_buff[text_cursor+1]))
         text_cursor++;
         else if (is_ascii(&text_buff[text_cursor]) && (!is_ascii(&text_buff[text_cursor+1])))
         text_cursor++;
         else text_cursor +=2;
+        /*terminal cursor move*/
         getyx(sendwin, cur_posY, cur_posX);
 		wmove(sendwin,	cur_posY, cur_posX+1);
-        /*TEST
-        wclear(sendwin);
-        if (text_cursor > sendwin->_maxx)
-        {
-            waddstr(sendwin,&text_buff[text_cursor - sendwin->_maxx]);
-            getyx(sendwin, cur_posY, cur_posX);
-            wmove(sendwin,	cur_posY, cur_posX+1);
-            wrefresh(sendwin);
-            return text_buff;
-        }
-        else
-        {
-            waddstr(sendwin,text_buff);
-            getyx(sendwin, cur_posY, cur_posX);
-            wmove(sendwin,	cur_posY, cur_posX+1);
-            wrefresh(sendwin);
-            return text_buff;
-        }
-       END TEST*/
         wrefresh(sendwin);
 	}
 	else if (i_char == '\n') 
@@ -241,7 +228,8 @@ char * key_handler(WINDOW * sendwin)
 
                 wclear(sendwin);
                 waddstr(sendwin,text_buff);
-                wmove(sendwin, cur_posY, ++cur_posX);
+                //wmove(sendwin, cur_posY, ++cur_posX);
+                wmove(sendwin, 0, text_cursor);
                 wrefresh(sendwin);
                 return text_buff;
             }
@@ -256,7 +244,8 @@ char * key_handler(WINDOW * sendwin)
 
                 wclear(sendwin);
                 waddstr(sendwin,text_buff);
-                wmove(sendwin, cur_posY, ++cur_posX);
+                //wmove(sendwin, cur_posY, ++cur_posX);
+                wmove(sendwin, 0, text_cursor);
                 wrefresh(sendwin);
                 return text_buff;
             }
@@ -266,28 +255,31 @@ char * key_handler(WINDOW * sendwin)
             text_buff[text_cursor] = (char)i_char;
             text_cursor++;
 
-            /*ORIG*/
+            /*ORIG
             wclear(sendwin);
             waddstr(sendwin,text_buff);
             wrefresh(sendwin);
             return text_buff;
-            /*ORIG END*/
+            ORIG END*/
 
-            /*TEST
+            /*TEST*/
             wclear(sendwin);
-            if (text_cursor > sendwin->_maxx)
+            if (text_cursor >= w_cols)
             {
-                waddstr(sendwin,&text_buff[text_cursor - sendwin->_maxx]);
+                cur_posX++;
+                waddstr(sendwin,&text_buff[text_cursor - w_cols+1]);
+                //wmove(sendwin,0, w_cols);
                 wrefresh(sendwin);
                 return text_buff;
             }
             else
             {
+                cur_posX++;
                 waddstr(sendwin,text_buff);
                 wrefresh(sendwin);
                 return text_buff;
             }
-            TEST END*/
+            /*TEST END*/
         }
     }
 return text_buff;
