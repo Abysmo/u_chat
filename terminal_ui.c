@@ -80,10 +80,32 @@ void ncurses_setup()
 
 int is_ascii(char * x)
 {
+
     unsigned int z = (int)*x;
     if (z > ASCII_MAX) return 0;
     else return 1;
 }
+
+int char_in_str(char * string)
+{
+    char * s_cur = string;
+    int chrcount = 0;
+    for (;*s_cur != '\0';)
+    {
+        if (is_ascii(s_cur))
+        {
+            chrcount++;
+            s_cur++;
+        }
+        else
+        {
+            chrcount +=2;
+            s_cur +=2;
+        }
+    }
+    return chrcount;
+}
+
 
 char * key_handler(WINDOW * sendwin)
 {
@@ -167,24 +189,18 @@ char * key_handler(WINDOW * sendwin)
         else if ((!is_ascii(&text_buff[text_cursor])) && is_ascii(&text_buff[text_cursor-1]))
             text_cursor --;
         else text_cursor -=2;
+
         /*terminal cursor move*/
-        //getyx(sendwin, cur_posY, cur_posX);
-        //wmove(sendwin, cur_posY, cur_posX-1);
-        /*TEST*/
-        //wclear(sendwin);
-        if ((!cur_posX) && text_cursor)
+        if (!cur_posX)
         {
             wclear(sendwin);
             waddstr(sendwin,&text_buff[text_cursor]);
-            //getyx(sendwin, cur_posY, cur_posX);
             wmove(sendwin, 0, 0);
             wrefresh(sendwin);
             return text_buff;
         }
         else
         {
-            //waddstr(sendwin,text_buff);
-            //getyx(sendwin, cur_posY, cur_posX);
             wmove(sendwin, 0, --cur_posX);
             wrefresh(sendwin);
             return text_buff;
@@ -252,34 +268,35 @@ char * key_handler(WINDOW * sendwin)
         }
         else
         {
-            text_buff[text_cursor] = (char)i_char;
-            text_cursor++;
-
-            /*ORIG
-            wclear(sendwin);
-            waddstr(sendwin,text_buff);
-            wrefresh(sendwin);
-            return text_buff;
-            ORIG END*/
-
-            /*TEST*/
-            wclear(sendwin);
-            if (text_cursor >= w_cols)
+            if (i_char < ASCII_MAX)
             {
-                cur_posX++;
-                waddstr(sendwin,&text_buff[text_cursor - w_cols+1]);
-                //wmove(sendwin,0, w_cols);
+                text_buff[text_cursor] = (char)i_char;
+                text_cursor++;
+            }
+            else
+            {
+                text_buff[text_cursor] = (char)i_char;
+                i_char = getch();
+                text_buff[text_cursor+1] = (char)i_char;
+                text_cursor+=2;
+
+            }
+
+            /*HERE~~~~~*/
+            wclear(sendwin);
+            if (cur_posX >= w_cols)
+            {
+                waddstr(sendwin,&text_buff[(char_in_str(text_buff)+1) - w_cols]);
                 wrefresh(sendwin);
                 return text_buff;
             }
             else
             {
-                cur_posX++;
                 waddstr(sendwin,text_buff);
                 wrefresh(sendwin);
                 return text_buff;
             }
-            /*TEST END*/
+
         }
     }
 return text_buff;

@@ -24,6 +24,7 @@ WINDOW * create_msgbox_win();
 WINDOW * create_msgsend_win();
 WINDOW * create_usrbox_win();
 int is_ascii(char * x);
+int char_in_str(char * string);
 void ncurses_setup();
 char * key_handler(WINDOW * sendwin);
 
