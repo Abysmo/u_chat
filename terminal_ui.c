@@ -45,8 +45,9 @@ WINDOW * create_msgsend_win()
 {	
 	getmaxyx(stdscr, w_rows, w_cols);
 
-    //WINDOW * win = newwin(1, w_cols, w_rows-1, 0);
-    WINDOW * win = newwin(1, MSG_MAXLEN, w_rows-1, 0);
+    WINDOW * win = newwin(1, w_cols, w_rows-1, 0);
+    //WINDOW * win = newwin(1, MSG_MAXLEN, w_rows-1, 0);
+    //WINDOW * win = newwin(10, w_cols, w_rows-1, 0);
 	start_color();
 	init_pair(2, COLOR_WHITE, COLOR_BLUE);
 	wcolor_set(win, 2, NULL);
@@ -54,7 +55,7 @@ WINDOW * create_msgsend_win()
 	nodelay(win, TRUE);
 	keypad(win, TRUE);
 
-    //scrollok(win, TRUE);
+    scrollok(win, TRUE);
 
 	wrefresh(win);
 	return win;
@@ -99,17 +100,25 @@ int char_in_str(char * string)
         }
         else
         {
-            chrcount +=2;
+            chrcount ++;
             s_cur +=2;
         }
     }
     return chrcount;
 }
 
+/*
+int buff_shift(WINDOW * win, char * string)
+{
+    if (win->_curx >= win->_maxx)
+        return (char_in_str(string) - win->_maxx) + 1;
+    else
+        return 0;
+}
+*/
 
 char * key_handler(WINDOW * sendwin)
 {
-
     getyx(sendwin, cur_posY, cur_posX);
     wmove(sendwin,	cur_posY, cur_posX);
     wrefresh(sendwin);
@@ -281,21 +290,29 @@ char * key_handler(WINDOW * sendwin)
                 text_cursor+=2;
 
             }
-
-            /*HERE~~~~~*/
             wclear(sendwin);
-            if (cur_posX >= w_cols)
+            wprintw(sendwin,"%s",text_buff);
+            wrefresh(sendwin);
+            //wechochar(sendwin, i_char);
+            return text_buff;
+
+            /*VISIBLE BUFFER OUTPUT
+            //wclear(sendwin);
+            if (char_in_str(text_buff) >= w_cols)
             {
-                waddstr(sendwin,&text_buff[(char_in_str(text_buff)+1) - w_cols]);
+                wclear(sendwin);
+                waddstr(sendwin,&text_buff[]);
                 wrefresh(sendwin);
                 return text_buff;
             }
             else
             {
+                wclear(sendwin);
                 waddstr(sendwin,text_buff);
                 wrefresh(sendwin);
                 return text_buff;
             }
+            */
 
         }
     }
