@@ -16,7 +16,7 @@ WINDOW * create_msgbox_win()
 {	
 	getmaxyx(stdscr, w_rows, w_cols);
 
-    WINDOW * win = newwin(w_rows-1, w_cols-NAME_LEN, 0, NAME_LEN);
+    WINDOW * win = newwin(w_rows-3, w_cols-NAME_LEN, 0, NAME_LEN);
 	start_color();
     init_pair(3, COLOR_WHITE, COLOR_BLACK);
     wcolor_set(win, 3, NULL);
@@ -30,7 +30,7 @@ WINDOW * create_usrbox_win()
 {
     getmaxyx(stdscr, w_rows, w_cols);
 
-    WINDOW * win = newwin(w_rows-1, 15, 0, 0);
+    WINDOW * win = newwin(w_rows-3, 16, 0, 0);
     //wborder(win,ACS_VLINE,ACS_VLINE,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD,ACS_BOARD);
     start_color();
     init_pair(1, COLOR_WHITE, COLOR_CYAN);
@@ -45,9 +45,9 @@ WINDOW * create_msgsend_win()
 {	
 	getmaxyx(stdscr, w_rows, w_cols);
 
-    WINDOW * win = newwin(1, w_cols, w_rows-1, 0);
-    //WINDOW * win = newwin(1, MSG_MAXLEN, w_rows-1, 0);
-    //WINDOW * win = newwin(10, w_cols, w_rows-1, 0);
+    //WINDOW * win = newwin(1, w_cols, w_rows-1, 0);
+    //WINDOW * win = newwin(3, MSG_MAXLEN, w_rows-3, 0);
+    WINDOW * win = newwin(3, w_cols, w_rows-3, 0);
 	start_color();
 	init_pair(2, COLOR_WHITE, COLOR_BLUE);
 	wcolor_set(win, 2, NULL);
@@ -71,9 +71,7 @@ void ncurses_setup()
 	refresh();
 
 	cbreak();//<<--
-	//raw();
 	nodelay(stdscr, TRUE);//<<--
-    //curs_set(0); // invis cursor
     noecho();//<<-- no echo for real cursor
     keypad(stdscr, TRUE);//<<-- keypad mode
     init_text();
@@ -82,7 +80,7 @@ void ncurses_setup()
 int is_ascii(char * x)
 {
 
-    unsigned int z = (int)*x;
+    unsigned int z = *x;
     if (z > ASCII_MAX) return 0;
     else return 1;
 }
@@ -107,15 +105,27 @@ int char_in_str(char * string)
     return chrcount;
 }
 
-/*
-int buff_shift(WINDOW * win, char * string)
+
+char * find_str_begin(WINDOW * win, char string[MSG_MAXLEN], int cursor_pos)
 {
-    if (win->_curx >= win->_maxx)
-        return (char_in_str(string) - win->_maxx) + 1;
-    else
-        return 0;
+    int counter = win->_maxx;
+    char * s_beg = &string[cursor_pos];
+    while ((s_beg == (char*)string) || (counter ==0))
+    {
+        if (is_ascii(s_beg))
+        {
+            s_beg--;
+            counter--;
+        }
+        else
+        {
+            s_beg-=2;
+            counter--;
+        }
+    }
+    return s_beg;
 }
-*/
+
 
 char * key_handler(WINDOW * sendwin)
 {
@@ -199,23 +209,23 @@ char * key_handler(WINDOW * sendwin)
             text_cursor --;
         else text_cursor -=2;
 
-        /*terminal cursor move*/
+        getyx(sendwin, cur_posY,cur_posX);
         if (!cur_posX)
         {
             wclear(sendwin);
-            waddstr(sendwin,&text_buff[text_cursor]);
-            wmove(sendwin, 0, 0);
+            waddstr(sendwin, find_str_begin(sendwin,text_buff,text_cursor));
+            //TEST
+            wmove(sendwin, --cur_posY, sendwin->_maxx);
             wrefresh(sendwin);
             return text_buff;
         }
         else
         {
-            wmove(sendwin, 0, --cur_posX);
+            wmove(sendwin, cur_posY, --cur_posX);
             wrefresh(sendwin);
             return text_buff;
         }
-        /*END TEST*/
-        wrefresh(sendwin);
+
 	}
 	else if (i_char == KEY_RIGHT)
 	{
@@ -228,10 +238,14 @@ char * key_handler(WINDOW * sendwin)
         else text_cursor +=2;
         /*terminal cursor move*/
         getyx(sendwin, cur_posY, cur_posX);
-		wmove(sendwin,	cur_posY, cur_posX+1);
+        if(cur_posX ==  sendwin->_maxx)
+            wmove(sendwin,	++cur_posY, 0);
+        else
+            wmove(sendwin, cur_posY, ++cur_posX);
         wrefresh(sendwin);
 	}
-	else if (i_char == '\n') 
+
+    else if (i_char == '\n') //KEY ENTER
 	{
         text_buff[strlen(text_buff)] = '\n';
 
@@ -243,7 +257,7 @@ char * key_handler(WINDOW * sendwin)
     else //putchar in buffer
     {
         char temp_buff[MSG_MAXLEN] = {0};
-        if (text_buff[text_cursor] != '\0') //putchar without shifting (inserting char)
+        if (text_buff[text_cursor] != '\0') //putchar with shifting (inserting char)
         {
             if (i_char < ASCII_MAX)
             {
@@ -290,30 +304,9 @@ char * key_handler(WINDOW * sendwin)
                 text_cursor+=2;
 
             }
-            wclear(sendwin);
-            wprintw(sendwin,"%s",text_buff);
-            wrefresh(sendwin);
-            //wechochar(sendwin, i_char);
+
+            wechochar(sendwin, i_char);
             return text_buff;
-
-            /*VISIBLE BUFFER OUTPUT
-            //wclear(sendwin);
-            if (char_in_str(text_buff) >= w_cols)
-            {
-                wclear(sendwin);
-                waddstr(sendwin,&text_buff[]);
-                wrefresh(sendwin);
-                return text_buff;
-            }
-            else
-            {
-                wclear(sendwin);
-                waddstr(sendwin,text_buff);
-                wrefresh(sendwin);
-                return text_buff;
-            }
-            */
-
         }
     }
 return text_buff;

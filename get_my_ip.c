@@ -1,8 +1,5 @@
 #include "get_my_ip.h"
 
-#define IPV4_ADDR_LEN 16 //XXX.XXX.XXX.XXX + \0
-#define ROUTE_PATH "/proc/net/route"
-
 char alt_local_ip[IPV4_ADDR_LEN + 2] = {0};	 //+2 because  + ""
 char broadcast_ip[IPV4_ADDR_LEN] = {0};
 
