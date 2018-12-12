@@ -9,7 +9,7 @@
 
 
 #ifndef MSG_MAXLEN
-#define MSG_MAXLEN 1024
+#define MSG_MAXLEN 2048
 #endif
 
 #define IN_BOX          w1

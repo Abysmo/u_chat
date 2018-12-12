@@ -23,7 +23,7 @@ sudo apt-get install ncurses-dev
 //#define ADDR(A,B,C,D) ((A<<24) | (B << 16) | (C << 8) | (D)) // for htonl()
 
 #ifndef MSG_MAXLEN
-#define MSG_MAXLEN 1024
+#define MSG_MAXLEN 2048
 #endif
 
 
