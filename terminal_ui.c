@@ -156,30 +156,51 @@ char * key_handler(WINDOW * sendwin)
         wscrl(IN_BOX, 1);
         wrefresh(IN_BOX);
     }
-    else if (i_char == KEY_BACKSPACE)
+    else if (i_char == KEY_BACKSPACE) //NOT WORKING !
 	{
         if (text_cursor < 1) return text_buff;
 
         char temp_buff[MSG_MAXLEN] = {0};
-        if (is_ascii(&text_buff[text_cursor]))
+        if (is_ascii(&text_buff[text_cursor-1]))
         {
-            strncpy(temp_buff, &text_buff[text_cursor], strlen(&text_buff[text_cursor]));
+            strcpy(temp_buff, &text_buff[text_cursor]);
             memset(&text_buff[text_cursor-1], '\0', strlen(temp_buff)+1);
             text_cursor--;
-            strncpy(&text_buff[text_cursor],temp_buff,strlen(temp_buff));
+            strcpy(&text_buff[text_cursor],temp_buff);
         }
         else
         {
-            strncpy(temp_buff, &text_buff[text_cursor-2], strlen(&text_buff[text_cursor]));
+            strcpy(temp_buff, &text_buff[text_cursor-2]);
             memset(&text_buff[text_cursor-2], '\0', strlen(temp_buff)+2);
             text_cursor-=2;
-            strncpy(&text_buff[text_cursor],temp_buff,strlen(temp_buff));
+            strcpy(&text_buff[text_cursor],temp_buff);
         }
 
-        getyx(sendwin, cur_posY, cur_posX);
-		wmove(sendwin,	cur_posY, cur_posX-1);		
-		wdelch(sendwin);
-		wrefresh(sendwin);
+        if (!cur_posX && !cur_posY)
+        {
+            wclear(sendwin);
+            scrollok(sendwin,FALSE);
+            waddstr(sendwin, find_str_begin(sendwin,text_buff,text_cursor));
+            wmove(sendwin, 0, sendwin->_maxx);
+            wdelch(sendwin);
+            wrefresh(sendwin);
+            scrollok(sendwin,TRUE);
+            return text_buff;
+        }
+        else if(!cur_posX && cur_posY)
+        {
+            wmove(sendwin, --cur_posY, sendwin->_maxx);
+            wdelch(sendwin);
+            wrefresh(sendwin);
+            return text_buff;
+        }
+        else
+        {
+            wmove(sendwin, cur_posY, --cur_posX);
+            wdelch(sendwin);
+            wrefresh(sendwin);
+            return text_buff;
+        }
 	}
 	else if (i_char == KEY_DC) 
 	{	
