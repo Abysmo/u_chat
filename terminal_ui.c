@@ -85,7 +85,6 @@ int is_ascii(char * x)
     else return 1;
 }
 
-
 int mulichar_in_str(char * string)
 {
     char * s_cur = string;
@@ -106,7 +105,6 @@ int mulichar_in_str(char * string)
     return chrcount;
 }
 
-
 char * find_str_begin(WINDOW * win, char string[MSG_MAXLEN], int cursor_pos)
 {
     int counter = win->_maxx;
@@ -126,7 +124,6 @@ char * find_str_begin(WINDOW * win, char string[MSG_MAXLEN], int cursor_pos)
     }
     return s_beg;
 }
-
 
 char * key_handler(WINDOW * sendwin)
 {
@@ -156,7 +153,7 @@ char * key_handler(WINDOW * sendwin)
         wscrl(IN_BOX, 1);
         wrefresh(IN_BOX);
     }
-    else if (i_char == KEY_BACKSPACE) //NOT WORKING !
+    else if (i_char == KEY_BACKSPACE)
 	{
         if (text_cursor < 1) return text_buff;
 
@@ -166,14 +163,14 @@ char * key_handler(WINDOW * sendwin)
             strcpy(temp_buff, &text_buff[text_cursor]);
             memset(&text_buff[text_cursor-1], '\0', strlen(temp_buff)+1);
             text_cursor--;
-            strcpy(&text_buff[text_cursor],temp_buff);
+            strncpy(&text_buff[text_cursor],temp_buff,strlen(temp_buff));
         }
         else
         {
-            strcpy(temp_buff, &text_buff[text_cursor-2]);
+            strcpy(temp_buff, &text_buff[text_cursor]);
             memset(&text_buff[text_cursor-2], '\0', strlen(temp_buff)+2);
             text_cursor-=2;
-            strcpy(&text_buff[text_cursor],temp_buff);
+            strncpy(&text_buff[text_cursor],temp_buff,strlen(temp_buff));
         }
 
         if (!cur_posX && !cur_posY)
