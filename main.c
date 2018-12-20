@@ -44,7 +44,7 @@ int main()
 {
 	setlocale(0, ""); //for unicode
 	unsigned int income_addr_len;
-    struct sockaddr_in local_addr, income_addr, addr;
+    struct sockaddr_in local_addr, income_addr, out_addr;
 	char buf[MSG_MAXLEN]={0};
 	int bytes_read;
     char * income_name;
@@ -53,17 +53,17 @@ int main()
     sock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP); //UDP (SOCK_NONBLOCK)
     if(sock < 0)
     {
-        fprintf(stderr,"Socket [addr] error : %s \n", strerror(errno));
+        fprintf(stderr,"Socket [out_addr] error : %s \n", strerror(errno));
         exit(1);
     }
 
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(PORT);
+    out_addr.sin_family = AF_INET;
+    out_addr.sin_port = htons(PORT);
 	
     const char * bc_ip = getmyip(0,1);
     const char * local_ip = getmyip(1,0);
 	if (bc_ip == NULL) {fprintf(stderr,"Failed to set IP ! \n"); exit(1);}
-	addr.sin_addr.s_addr = inet_addr(bc_ip); 
+    out_addr.sin_addr.s_addr = inet_addr(bc_ip);
     /*===========================================*/
 
     /*===============input_sock================*/
@@ -114,14 +114,14 @@ int main()
 	{	
         usleep(10000);
         refresh_list(USR_BOX, root, 0);
-        name_broadcast(name_msg, &addr);
+        name_broadcast(name_msg, &out_addr);
         delete_timeout_users(root);
         msg_ptr = key_handler(OUT_BOX);
 		
         if (i_char == '\n' ) /*ENTER KEY PRESSED*/
 		{
             if(*msg_ptr == '\n') {*msg_ptr  = '\0'; continue;} // do not send blank string
-            sendto(sock, msg_ptr, MSG_MAXLEN, 0,(struct sockaddr *)&addr, sizeof(addr));
+            sendto(sock, msg_ptr, MSG_MAXLEN, 0,(struct sockaddr *)&out_addr, sizeof(out_addr));
             memset(msg_ptr, '\0', MSG_MAXLEN);
 		}
 

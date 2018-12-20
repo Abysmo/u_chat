@@ -77,6 +77,26 @@ void ncurses_setup()
     init_text();
 }
 
+void redraw_UI()
+{
+    wresize(IN_BOX, LINES-3, COLS-NAME_LEN);
+    wresize(USR_BOX, LINES-3, 16);
+    wresize(OUT_BOX, 3, COLS);
+    //refresh();
+    wrefresh(IN_BOX);
+    wrefresh(OUT_BOX);
+    wrefresh(USR_BOX);
+    /*
+    getmaxyx(stdscr, w_rows, w_cols);
+    IN_BOX->_maxy = w_rows-3;
+    IN_BOX->_maxx = w_cols-NAME_LEN;
+
+
+    OUT_BOX
+    USR_BOX
+    */
+}
+
 int is_ascii(char * x)
 {
 
@@ -105,6 +125,7 @@ int mulichar_in_str(char * string)
     return chrcount;
 }
 
+//finding beginning of string in input window when cursor is moving on previous line
 char * find_str_begin(WINDOW * win, char string[MSG_MAXLEN], int cursor_pos)
 {
     int counter = win->_maxx;
@@ -133,7 +154,10 @@ char * key_handler(WINDOW * sendwin)
     extern int sock, sock_recv;
 
     if((i_char = getch())==ERR) return text_buff;
-
+    else if (i_char == KEY_RESIZE)
+    {
+        redraw_UI();
+    }
     else if (i_char == 27) /*exit*/
     {
         extern  net_users_t * root;
