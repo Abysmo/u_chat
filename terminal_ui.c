@@ -77,15 +77,15 @@ void ncurses_setup()
     init_text();
 }
 
-void redraw_UI()
+void draw_UI()
 {
-    wresize(IN_BOX, LINES-3, COLS-NAME_LEN);
-    wresize(USR_BOX, LINES-3, 16);
-    wresize(OUT_BOX, 3, COLS);
-    //refresh();
-    wrefresh(IN_BOX);
-    wrefresh(OUT_BOX);
-    wrefresh(USR_BOX);
+    endwin();
+    refresh();
+
+    USR_BOX =  create_usrbox_win();
+    OUT_BOX = create_msgsend_win();
+    IN_BOX = create_msgbox_win();
+
     /*
     getmaxyx(stdscr, w_rows, w_cols);
     IN_BOX->_maxy = w_rows-3;
@@ -156,7 +156,12 @@ char * key_handler(WINDOW * sendwin)
     if((i_char = getch())==ERR) return text_buff;
     else if (i_char == KEY_RESIZE)
     {
-        redraw_UI();
+        int newY, newX;
+        draw_UI();
+        getyx(sendwin, newY, newX);
+        waddstr(sendwin,  text_buff);
+        wmove();
+        wrefresh(sendwin);
     }
     else if (i_char == 27) /*exit*/
     {
@@ -290,7 +295,6 @@ char * key_handler(WINDOW * sendwin)
             wmove(sendwin, cur_posY, ++cur_posX);
         wrefresh(sendwin);
 	}
-
     else if (i_char == '\n') //KEY ENTER
 	{
         text_buff[strlen(text_buff)] = '\n';

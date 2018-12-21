@@ -27,6 +27,7 @@ int is_ascii(char * x);
 int char_in_str(char * string);
 void ncurses_setup();
 char * key_handler(WINDOW * sendwin);
+void draw_UI();
 
 WINDOW * IN_BOX;
 WINDOW * OUT_BOX;

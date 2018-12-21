@@ -104,9 +104,7 @@ int main()
 
 	//ncurses
 	ncurses_setup();
-    USR_BOX =  create_usrbox_win();
-    OUT_BOX = create_msgsend_win();
-    IN_BOX = create_msgbox_win();
+    draw_UI();
     refresh_list(USR_BOX, root,1);
 
     /*~~~~~MAIN CYCLE~~~~~*/
