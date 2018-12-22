@@ -13,7 +13,7 @@ const char * getmyip(int retflag, int infoflag)
 	FILE *f;
 	char line[100] , *p , *c;
 
-	f = fopen(ROUTE_PATH , "r"); // TEST
+    f = fopen(ROUTE_PATH , "r");
 	if (f == NULL)
 	{
 		printf(ROUTE_PATH);
@@ -50,7 +50,7 @@ const char * getmyip(int retflag, int infoflag)
 		return alt_local_ip; 
 	}
 
-
+    //parsing ROUTE_PATH("/proc/net/route") for default interface
 	while(fgets(line , 100 , f))
 	{
 		p = strtok(line , " \t");
@@ -60,7 +60,6 @@ const char * getmyip(int retflag, int infoflag)
 		{
 			if(strcmp(c , "00000000") == 0)
 			{
-				//printf("Default interface is : %s \n" , p);
 				break;
 			}
 		}
@@ -74,7 +73,7 @@ const char * getmyip(int retflag, int infoflag)
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if(fd < 0)
     {
-        fprintf(stderr,"Creating socket error : %s \n", strerror(errno));
+        fprintf(stderr,"Creating temp socket error : %s \n", strerror(errno));
         return NULL;
     }
 	/*get an IPv4 IP address */
@@ -83,6 +82,12 @@ const char * getmyip(int retflag, int infoflag)
 	/* IP address attached to default interface */
 	strncpy(ifr.ifr_name, p, IFNAMSIZ-1);
 
+/*
+        SIOCGIFADDR
+        Get  or set the address of the device using ifr_addr.  Setting
+        the interface address is a privileged operation.  For compati‐
+        bility, only AF_INET addresses are accepted or returned.
+ */
 	ioctl(fd, SIOCGIFADDR, &ifr);
 
 	close(fd);
@@ -91,7 +96,6 @@ const char * getmyip(int retflag, int infoflag)
 
 	const char * local_ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 
-	
 	strncpy (broadcast_ip, local_ip, (sizeof(broadcast_ip)*(sizeof(char))));		
 
  	char * lastByte = strrchr(broadcast_ip, '.');

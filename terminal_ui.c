@@ -1,15 +1,13 @@
 #include "terminal_ui.h"
 #include "users.h"
 
-
-char text_buff[MSG_MAXLEN]= {0};
-int text_cursor = 0;
-
-
+//initilize input string
 void init_text()
 {
     memset(text_buff,'\0',MSG_MAXLEN);
     text_cursor = 0;
+    wclear(OUT_BOX);
+    wrefresh(OUT_BOX);
 }
 	
 WINDOW * create_msgbox_win()
@@ -61,6 +59,7 @@ WINDOW * create_msgsend_win()
 	return win;
 }
 
+//performing ncurses windows parameters and turn on Ncurses mode
 void ncurses_setup()
 {
 	if(!initscr())
@@ -77,6 +76,7 @@ void ncurses_setup()
     init_text();
 }
 
+//draw windows
 void draw_UI()
 {
     endwin();
@@ -85,18 +85,9 @@ void draw_UI()
     USR_BOX =  create_usrbox_win();
     OUT_BOX = create_msgsend_win();
     IN_BOX = create_msgbox_win();
-
-    /*
-    getmaxyx(stdscr, w_rows, w_cols);
-    IN_BOX->_maxy = w_rows-3;
-    IN_BOX->_maxx = w_cols-NAME_LEN;
-
-
-    OUT_BOX
-    USR_BOX
-    */
 }
 
+//check char is ascii or not
 int is_ascii(char * x)
 {
 
@@ -105,7 +96,8 @@ int is_ascii(char * x)
     else return 1;
 }
 
-int mulichar_in_str(char * string)
+//count how much visible chars in string(multibyte chars counts as one)
+int multichar_in_str(char * string)
 {
     char * s_cur = string;
     int chrcount = 0;
@@ -146,6 +138,7 @@ char * find_str_begin(WINDOW * win, char string[MSG_MAXLEN], int cursor_pos)
     return s_beg;
 }
 
+//main key handling function
 char * key_handler(WINDOW * sendwin)
 {
     getyx(sendwin, cur_posY, cur_posX);
@@ -156,12 +149,8 @@ char * key_handler(WINDOW * sendwin)
     if((i_char = getch())==ERR) return text_buff;
     else if (i_char == KEY_RESIZE)
     {
-        int newY, newX;
         draw_UI();
-        getyx(sendwin, newY, newX);
-        waddstr(sendwin,  text_buff);
-        wmove();
-        wrefresh(sendwin);
+        init_text();
     }
     else if (i_char == 27) /*exit*/
     {
@@ -298,10 +287,6 @@ char * key_handler(WINDOW * sendwin)
     else if (i_char == '\n') //KEY ENTER
 	{
         text_buff[strlen(text_buff)] = '\n';
-
-        text_cursor = 0;
-		wclear(sendwin);
-		wrefresh(sendwin);
         return text_buff;
 	}
     else //putchar in buffer

@@ -19,7 +19,6 @@ sudo apt-get install ncurses-dev
 #include <locale.h>
 #include <time.h>
 
-//#define ADDR "192.168.0.255" // for inet_addr()
 //#define ADDR(A,B,C,D) ((A<<24) | (B << 16) | (C << 8) | (D)) // for htonl()
 
 #ifndef MSG_MAXLEN
@@ -33,6 +32,7 @@ sudo apt-get install ncurses-dev
 void name_broadcast(char * name, struct sockaddr_in * addr); //TEST
 void refresh_list(WINDOW * list_win, net_users_t * root, int force_refresh);
 char * remove_newline(char * str);
+void clear_input();
 
 char * msg_ptr=NULL;
 char name_msg[NAME_LEN+1];
@@ -120,7 +120,7 @@ int main()
 		{
             if(*msg_ptr == '\n') {*msg_ptr  = '\0'; continue;} // do not send blank string
             sendto(sock, msg_ptr, MSG_MAXLEN, 0,(struct sockaddr *)&out_addr, sizeof(out_addr));
-            memset(msg_ptr, '\0', MSG_MAXLEN);
+            init_text();
 		}
 
         bytes_read = recvfrom(sock_recv, buf, MSG_MAXLEN, MSG_DONTWAIT, (struct sockaddr *)&income_addr, &income_addr_len);
@@ -146,7 +146,8 @@ int main()
 	}
 
 }
-		
+
+//broadcasting name fn
 void name_broadcast(char * name, struct sockaddr_in * addr)
 {
     static time_t before = 0;
@@ -166,6 +167,7 @@ void name_broadcast(char * name, struct sockaddr_in * addr)
     }
 }
 
+//function perform newline cut from string(for placing incoming name in chat window)
 char * remove_newline(char * str)
 {
     char * cut_nl = strchr(str, '\n');
@@ -173,6 +175,7 @@ char * remove_newline(char * str)
     return str;
 }
 
+//refresing user list. if force_refresh is true refresing list without timeout.
 void refresh_list(WINDOW * list_win, net_users_t * root, int force_refresh)
 {
     net_users_t * cursor = root;

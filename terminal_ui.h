@@ -19,20 +19,26 @@
 #define ASCII_MAX 127
 
 //#define FORBIDDEN_KEYS
+WINDOW * IN_BOX;
+WINDOW * OUT_BOX;
+WINDOW * USR_BOX;
+long i_char;
+int w_rows, w_cols, cur_posX, cur_posY;
+
+char text_buff[MSG_MAXLEN];
+int text_cursor;
+
 
 WINDOW * create_msgbox_win();
 WINDOW * create_msgsend_win();
 WINDOW * create_usrbox_win();
+void init_text();
 int is_ascii(char * x);
 int char_in_str(char * string);
 void ncurses_setup();
 char * key_handler(WINDOW * sendwin);
 void draw_UI();
 
-WINDOW * IN_BOX;
-WINDOW * OUT_BOX;
-WINDOW * USR_BOX;
-long i_char;
-int w_rows, w_cols, cur_posX, cur_posY;
+
 
 #endif
