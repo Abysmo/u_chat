@@ -26,10 +26,10 @@ sudo apt-get install ncurses-dev
 #endif
 
 
-#define PORT 5050
+#define PORT 48699
 #define SRVC_CMD_SEP 0x1e //separator for dividing text and service messages
 
-void name_broadcast(char * name, struct sockaddr_in * addr); //TEST
+void name_broadcast();
 void refresh_list(WINDOW * list_win, net_users_t * root, int force_refresh);
 char * remove_newline(char * str);
 void clear_input();
@@ -37,14 +37,14 @@ void clear_input();
 char * msg_ptr=NULL;
 char name_msg[NAME_LEN+1];
 int sock, sock_recv;
+struct sockaddr_in local_addr, income_addr, out_addr;
 //struct sockaddr_in addr;
 net_users_t * root;
 
 int main()
 {
 	setlocale(0, ""); //for unicode
-	unsigned int income_addr_len;
-    struct sockaddr_in local_addr, income_addr, out_addr;
+    unsigned int income_addr_len;
 	char buf[MSG_MAXLEN]={0};
 	int bytes_read;
     char * income_name;
@@ -112,13 +112,14 @@ int main()
 	{	
         usleep(10000);
         refresh_list(USR_BOX, root, 0);
-        name_broadcast(name_msg, &out_addr);
+        name_broadcast();
         delete_timeout_users(root);
         msg_ptr = key_handler(OUT_BOX);
 		
         if (i_char == '\n' ) /*ENTER KEY PRESSED*/
 		{
             if(*msg_ptr == '\n') {*msg_ptr  = '\0'; continue;} // do not send blank string
+
             sendto(sock, msg_ptr, MSG_MAXLEN, 0,(struct sockaddr *)&out_addr, sizeof(out_addr));
             init_text();
 		}
@@ -136,7 +137,8 @@ int main()
                 continue;
             }
 
-            if ((income_name = find_user(root, inet_ntoa(income_addr.sin_addr))) == NULL) {continue;}//do not accept messages from unregistred users
+            if ((income_name = find_user(root, inet_ntoa(income_addr.sin_addr))) == NULL)
+                continue;//do not accept messages from unregistred users
 
             wprintw(IN_BOX,"[%s]-> %s", remove_newline(income_name) , buf); //print message procedure
             wrefresh(IN_BOX);
@@ -148,21 +150,21 @@ int main()
 }
 
 //broadcasting name fn
-void name_broadcast(char * name, struct sockaddr_in * addr)
+void name_broadcast()
 {
     static time_t before = 0;
     time_t difference = 0;
     if (!before)
     {
         before = time(NULL);
-        sendto(sock, name, NAME_LEN, 0,(struct sockaddr *)&addr, sizeof(addr));
+        sendto(sock, name_msg, NAME_LEN, 0,(struct sockaddr *)&out_addr, sizeof(out_addr));
         return;
     }
 
     difference =  time(NULL) - before;
     if (difference >= USER_TIMEOUT_S)
     {
-        sendto(sock, name, NAME_LEN, 0,(struct sockaddr *)&addr, sizeof(addr));
+        sendto(sock, name_msg, NAME_LEN, 0,(struct sockaddr *)&out_addr, sizeof(out_addr));
         before = time(NULL);
     }
 }
