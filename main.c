@@ -60,7 +60,7 @@ int main()
     out_addr.sin_family = AF_INET;
     out_addr.sin_port = htons(PORT);
 	
-    const char * bc_ip = getmyip(0,1);
+    const char * bc_ip = getmyip(0,1); // getmyip(); NEED REFACTORING !!!!!!!!!!!!!!!!!!!!! POINTER OVERRIDE ISSUE ! !!!11111
     const char * local_ip = getmyip(1,0);
 	if (bc_ip == NULL) {fprintf(stderr,"Failed to set IP ! \n"); exit(1);}
     out_addr.sin_addr.s_addr = inet_addr(bc_ip);
