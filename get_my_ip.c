@@ -2,6 +2,7 @@
 
 char alt_local_ip[IPV4_ADDR_LEN + 2] = {0};	 //+2 because  + ""
 char broadcast_ip[IPV4_ADDR_LEN] = {0};
+char local_ip[IPV4_ADDR_LEN] = {0};
 
 /*retflag ---> if (retflag == true) - getmyip() return actual ip, else return broadcast ip (xxx.xxx.xxx.255)
 infoflag ---> if (infoflag == true) - getmyip() print info about local ip, broadcast ip and default interface else no info is printed*/
@@ -22,7 +23,7 @@ const char * getmyip(int retflag, int infoflag)
 		char stdin_ip[IPV4_ADDR_LEN]={0};
 		scanf("%s", stdin_ip);
 		
-		sprintf(alt_local_ip,"\"%s\"",stdin_ip);
+        sprintf(alt_local_ip,"\"%s\"",stdin_ip); //concat. with quotation marks
 		
 		
 		int ip_sep = 4;
@@ -94,8 +95,7 @@ const char * getmyip(int retflag, int infoflag)
 
 	/* making broadcast ip */
 
-	const char * local_ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
-
+    strcpy (local_ip, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
 	strncpy (broadcast_ip, local_ip, (sizeof(broadcast_ip)*(sizeof(char))));		
 
  	char * lastByte = strrchr(broadcast_ip, '.');
