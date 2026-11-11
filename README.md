@@ -1,4 +1,4 @@
-# u_chat (in development)
+# u_chat (abandoned)
 udp broadcast chat in terminal for linux
 
 libs:
